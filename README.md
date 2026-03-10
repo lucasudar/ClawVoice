@@ -9,9 +9,9 @@ A minimal iOS voice assistant for [OpenClaw](https://github.com/openclaw/opencla
 No video. No camera. No continuous streaming. Just voice.
 
 <p align="center">
-  <img src="assets/screenshot-main.jpg" width="220" alt="Main screen"/>
+  <img src="assets/screenshot-main.png" width="220" alt="Main screen"/>
   &nbsp;&nbsp;&nbsp;
-  <img src="assets/screenshot-settings.jpg" width="220" alt="Settings screen"/>
+  <img src="assets/screenshot-settings.png" width="220" alt="Settings screen"/>
 </p>
 
 ---
@@ -99,7 +99,7 @@ After Tailscale is up, your server is accessible at `https://your-machine.tail06
 
 Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
-The app uses the **Gemini Live API** (`gemini-2.0-flash-live-001` model) — a real-time audio WebSocket. This is different from the standard Gemini text API; make sure your key has Live API access (free tier works).
+The app uses the **Gemini Live API** (`gemini-2.5-flash-native-audio-preview-12-2025` model) — a real-time audio WebSocket. This is different from the standard Gemini text API; make sure your key has Live API access (free tier works).
 
 ---
 
@@ -281,7 +281,7 @@ ClawVoice/
 → Try wired headphones or AirPods. Bluetooth audio latency can cause gaps.
 
 **Gemini model error (1008 policy violation)**
-→ In Settings, try a different model from the dropdown. Google frequently renames Live API models. Current working: `gemini-2.0-flash-live-001`.
+→ In Settings, try a different model from the dropdown. Google frequently renames Live API models. Recommended: `gemini-2.5-flash-native-audio-preview-12-2025`. Fallback: `gemini-2.0-flash-live-001`.
 
 **App stops when screen locks**
 → Make sure `UIBackgroundModes: audio` is in Info.plist (it is by default in this repo). Check that microphone permission is granted in iOS Settings → Privacy → Microphone.

@@ -48,6 +48,7 @@ struct GeminiConfig {
     // Models to try (Google renames/breaks these frequently)
     // Endpoint is always v1alpha BidiGenerateContent
     static let availableModels = [
+        "gemini-2.5-flash-native-audio-preview-12-2025",
         "gemini-2.0-flash-live-001",
         "gemini-live-2.0-flash-001",
         "gemini-2.0-flash-exp",

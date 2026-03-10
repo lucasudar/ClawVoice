@@ -41,7 +41,7 @@ final class AppSettings: ObservableObject {
                         ? ud.integer(forKey: "openClawPort") : 443
         openClawToken = ud.string(forKey: "openClawToken") ?? ""
         assistantName = ud.string(forKey: "assistantName") ?? "Assistant"
-        geminiModel   = ud.string(forKey: "geminiModel")   ?? "gemini-2.0-flash-live-001"
+        geminiModel   = ud.string(forKey: "geminiModel")   ?? "gemini-2.5-flash-native-audio-preview-12-2025"
         voiceName     = ud.string(forKey: "voiceName")     ?? "Aoede"
         systemPrompt  = ud.string(forKey: "systemPrompt")  ??
             "You are a helpful voice assistant. Keep responses concise and conversational. When the user asks you to do something (send a message, search the web, check calendar, etc.), use the execute tool."
