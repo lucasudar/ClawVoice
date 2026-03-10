@@ -117,7 +117,8 @@ struct ContentView: View {
         case .idle:        return .white
         case .connecting:  return .gray
         case .listening:   return .blue
-        case .thinking:    return Color(hue: 0.1, saturation: 0.9, brightness: 1.0) // orange
+        case .paused:      return Color(white: 0.5)  // dim gray
+        case .thinking:    return Color(hue: 0.1, saturation: 0.9, brightness: 1.0)
         case .speaking:    return .green
         case .error:       return .red
         }

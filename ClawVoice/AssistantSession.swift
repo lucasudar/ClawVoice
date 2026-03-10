@@ -11,17 +11,19 @@ final class AssistantSession: ObservableObject {
         case idle
         case connecting
         case listening
+        case paused       // mic muted, connection alive
         case thinking
         case speaking
         case error(String)
 
         var label: String {
             switch self {
-            case .idle:        return "Tap to talk"
-            case .connecting:  return "Connecting…"
-            case .listening:   return "Listening…"
-            case .thinking:    return "Thinking…"
-            case .speaking:    return "Speaking…"
+            case .idle:         return "Tap to talk"
+            case .connecting:   return "Connecting…"
+            case .listening:    return "Listening…"
+            case .paused:       return "Paused — tap to resume"
+            case .thinking:     return "Thinking…"
+            case .speaking:     return "Speaking…"
             case .error(let e): return e
             }
         }
@@ -57,11 +59,26 @@ final class AssistantSession: ObservableObject {
     // MARK: - Public API
 
     func toggle() {
-        if state.isActive {
-            stop()
-        } else {
+        switch state {
+        case .idle, .error:
             start()
+        case .paused:
+            resume()
+        case .listening, .speaking, .thinking:
+            pause()
+        case .connecting:
+            stop()
         }
+    }
+
+    func pause() {
+        audio.setMuted(true)
+        state = .paused
+    }
+
+    func resume() {
+        audio.setMuted(false)
+        state = .listening
     }
 
     func start() {
