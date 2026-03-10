@@ -1,0 +1,365 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AD9FC24812A84DA1B20E1B77 /* ClawVoiceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578DB57256214CD1B3407163 /* ClawVoiceApp.swift */; };
+		1F17A0C46E4645559CD23E35 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A46C2950D9B49F68F1291B0 /* ContentView.swift */; };
+		DD1FFEEB8C9949FC8C84DC50 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 537DF919EE4241BCAE62B7F9 /* SettingsView.swift */; };
+		76EB259D07184245906ECC54 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE2CC5AD96A46179E371792 /* AppSettings.swift */; };
+		008E1CD8F07C4993AAB85EFE /* AssistantSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F742F36D654400B93CC3F55 /* AssistantSession.swift */; };
+		ABDC48066DF847EAA1E3B8E5 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101865D18E3D484F91580E22 /* AudioManager.swift */; };
+		8CAF917ED54B4D97A1274491 /* GeminiConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FFA700DCEFD417E99AA577A /* GeminiConfig.swift */; };
+		B7AAB76FFCD6415BB0CB6833 /* GeminiLiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16958F6FDD94D449790EF97 /* GeminiLiveService.swift */; };
+		64967C66627241DDB79B0C3E /* GeminiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2C3BF7ADF04309B7E02D63 /* GeminiModels.swift */; };
+		04FC810201C84BB986E84BDC /* OpenClawBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B4468244DE4E91B1FA0FFA /* OpenClawBridge.swift */; };
+		3BA6AD1A508347F49D1E8E68 /* ToolCallRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5339E6913614DCB86D47C15 /* ToolCallRouter.swift */; };
+		72C07683209C4462BBE71068 /* AssistantIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2D6834523F4C9B9B2220C0 /* AssistantIntent.swift */; };
+		46962468C95B4EABBC8CCEFB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D81D0AAA570A48B4A7E6EF3E /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		578DB57256214CD1B3407163 /* ClawVoiceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClawVoiceApp.swift; sourceTree = "<group>"; };
+		8A46C2950D9B49F68F1291B0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		537DF919EE4241BCAE62B7F9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		7AE2CC5AD96A46179E371792 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		7F742F36D654400B93CC3F55 /* AssistantSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSession.swift; sourceTree = "<group>"; };
+		101865D18E3D484F91580E22 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		0FFA700DCEFD417E99AA577A /* GeminiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiConfig.swift; sourceTree = "<group>"; };
+		D16958F6FDD94D449790EF97 /* GeminiLiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiLiveService.swift; sourceTree = "<group>"; };
+		2D2C3BF7ADF04309B7E02D63 /* GeminiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModels.swift; sourceTree = "<group>"; };
+		C4B4468244DE4E91B1FA0FFA /* OpenClawBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawBridge.swift; sourceTree = "<group>"; };
+		F5339E6913614DCB86D47C15 /* ToolCallRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallRouter.swift; sourceTree = "<group>"; };
+		6B2D6834523F4C9B9B2220C0 /* AssistantIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantIntent.swift; sourceTree = "<group>"; };
+		D81D0AAA570A48B4A7E6EF3E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F41A31D186A84CC3883C70C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		18E0CFAED7B342CBB61CFEC1 /* ClawVoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawVoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		12B61AC9C7DD427F9613AF66 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		072B5FA3482C49658A48D106 = {
+			isa = PBXGroup;
+			children = (
+				578DB57256214CD1B3407163 /* ClawVoiceApp.swift */,
+				8A46C2950D9B49F68F1291B0 /* ContentView.swift */,
+				537DF919EE4241BCAE62B7F9 /* SettingsView.swift */,
+				7AE2CC5AD96A46179E371792 /* AppSettings.swift */,
+				7F742F36D654400B93CC3F55 /* AssistantSession.swift */,
+				157D52888F504ABD8123156F /* Audio */,
+				9706E5C861114E1BA06339ED /* Gemini */,
+				2AF3B40BE17346A1BDFA09FB /* OpenClaw */,
+				076D8642E8804E75B06CA1F6 /* Intents */,
+				D81D0AAA570A48B4A7E6EF3E /* Assets.xcassets */,
+				F41A31D186A84CC3883C70C5 /* Info.plist */,
+				8260EC3D90B4408691A1CF43 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8260EC3D90B4408691A1CF43 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				18E0CFAED7B342CBB61CFEC1 /* ClawVoice.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		157D52888F504ABD8123156F /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				101865D18E3D484F91580E22 /* AudioManager.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		9706E5C861114E1BA06339ED /* Gemini */ = {
+			isa = PBXGroup;
+			children = (
+				0FFA700DCEFD417E99AA577A /* GeminiConfig.swift */,
+				D16958F6FDD94D449790EF97 /* GeminiLiveService.swift */,
+				2D2C3BF7ADF04309B7E02D63 /* GeminiModels.swift */,
+			);
+			path = Gemini;
+			sourceTree = "<group>";
+		};
+		2AF3B40BE17346A1BDFA09FB /* OpenClaw */ = {
+			isa = PBXGroup;
+			children = (
+				C4B4468244DE4E91B1FA0FFA /* OpenClawBridge.swift */,
+				F5339E6913614DCB86D47C15 /* ToolCallRouter.swift */,
+			);
+			path = OpenClaw;
+			sourceTree = "<group>";
+		};
+		076D8642E8804E75B06CA1F6 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				6B2D6834523F4C9B9B2220C0 /* AssistantIntent.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5B9FCECCDD3044AF9FEB0376 /* ClawVoice */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 96A64F0C82BB4C8690CAE0BC /* Build configuration list for PBXNativeTarget "ClawVoice" */;
+			buildPhases = (
+				0BC40E5AD84844AF9FD57906 /* Sources */,
+				12B61AC9C7DD427F9613AF66 /* Frameworks */,
+				D6A80B2F118E44B7A1261159 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ClawVoice;
+			productName = ClawVoice;
+			productReference = 18E0CFAED7B342CBB61CFEC1 /* ClawVoice.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		731DAA3DFDD7496599205E80 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					5B9FCECCDD3044AF9FEB0376 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = D1D971CB6C52436F90585381 /* Build configuration list for PBXProject "ClawVoice" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 072B5FA3482C49658A48D106;
+			productRefGroup = 8260EC3D90B4408691A1CF43 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5B9FCECCDD3044AF9FEB0376 /* ClawVoice */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D6A80B2F118E44B7A1261159 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				46962468C95B4EABBC8CCEFB /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0BC40E5AD84844AF9FD57906 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD9FC24812A84DA1B20E1B77 /* ClawVoiceApp.swift in Sources */,
+				1F17A0C46E4645559CD23E35 /* ContentView.swift in Sources */,
+				DD1FFEEB8C9949FC8C84DC50 /* SettingsView.swift in Sources */,
+				76EB259D07184245906ECC54 /* AppSettings.swift in Sources */,
+				008E1CD8F07C4993AAB85EFE /* AssistantSession.swift in Sources */,
+				ABDC48066DF847EAA1E3B8E5 /* AudioManager.swift in Sources */,
+				8CAF917ED54B4D97A1274491 /* GeminiConfig.swift in Sources */,
+				B7AAB76FFCD6415BB0CB6833 /* GeminiLiveService.swift in Sources */,
+				64967C66627241DDB79B0C3E /* GeminiModels.swift in Sources */,
+				04FC810201C84BB986E84BDC /* OpenClawBridge.swift in Sources */,
+				3BA6AD1A508347F49D1E8E68 /* ToolCallRouter.swift in Sources */,
+				72C07683209C4462BBE71068 /* AssistantIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		69D42155C87B48BD8287C09F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		ECA1B3200E7E43B39283F096 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		00C81E6DC7DC449CBD5501EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClawVoice/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucasudar.ClawVoice;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		093869204D734DCF81661A36 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClawVoice/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucasudar.ClawVoice;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D1D971CB6C52436F90585381 /* Build configuration list for PBXProject "ClawVoice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				69D42155C87B48BD8287C09F /* Debug */,
+				ECA1B3200E7E43B39283F096 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		96A64F0C82BB4C8690CAE0BC /* Build configuration list for PBXNativeTarget "ClawVoice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00C81E6DC7DC449CBD5501EF /* Debug */,
+				093869204D734DCF81661A36 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 731DAA3DFDD7496599205E80 /* Project object */;
+}
