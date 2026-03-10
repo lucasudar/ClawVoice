@@ -100,9 +100,45 @@ final class AudioManager {
         isCapturing = false
     }
 
-    /// Mute mic while Gemini is speaking (prevents echo feedback).
+    /// Pause/resume mic capture. Removes tap entirely when paused — clears iOS mic indicator.
     func setMuted(_ muted: Bool) {
+        guard isMuted != muted else { return }
         isMuted = muted
+        if muted {
+            audioEngine.inputNode.removeTap(onBus: 0)
+        } else {
+            reinstallTap()
+        }
+    }
+
+    private func reinstallTap() {
+        let inputNode    = audioEngine.inputNode
+        let nativeFormat = inputNode.outputFormat(forBus: 0)
+        let resampleFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                           sampleRate: inputSampleRate,
+                                           channels: channels,
+                                           interleaved: false)!
+        let needsResample = nativeFormat.sampleRate != inputSampleRate || nativeFormat.channelCount != channels
+        let converter = needsResample ? AVAudioConverter(from: nativeFormat, to: resampleFormat) : nil
+
+        inputNode.installTap(onBus: 0, bufferSize: 4096, format: nativeFormat) { [weak self] buffer, _ in
+            guard let self, !self.isMuted else { return }
+            let pcmData: Data
+            if let converter {
+                guard let resampled = self.convert(buffer, using: converter, to: resampleFormat) else { return }
+                pcmData = self.float32ToInt16Data(resampled)
+            } else {
+                pcmData = self.float32ToInt16Data(buffer)
+            }
+            self.sendQueue.async {
+                self.accumulated.append(pcmData)
+                if self.accumulated.count >= self.minSendBytes {
+                    let chunk = self.accumulated
+                    self.accumulated = Data()
+                    self.chunkHandler?(chunk)
+                }
+            }
+        }
     }
 
     /// Schedule a chunk of PCM Int16 24kHz audio for gapless playback.
