@@ -94,7 +94,7 @@ struct ContentView: View {
                 // Config warning
                 if !settings.isConfigured {
                     Button { showSettings = true } label: {
-                        Label("Нужна настройка", systemImage: "exclamationmark.triangle.fill")
+                        Label("Setup required", systemImage: "exclamationmark.triangle.fill")
                             .font(.footnote)
                             .foregroundColor(.orange)
                     }
@@ -123,7 +123,7 @@ struct ContentView: View {
             get: { session.lastError != nil },
             set: { if !$0 { session.lastError = nil } }
         )) {
-            Button("Настройки") { showSettings = true }
+            Button("Settings") { showSettings = true }
             Button("OK", role: .cancel) { session.lastError = nil }
         } message: {
             Text(session.lastError ?? "")

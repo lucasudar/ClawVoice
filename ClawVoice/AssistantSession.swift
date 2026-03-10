@@ -18,12 +18,12 @@ final class AssistantSession: ObservableObject {
 
         var label: String {
             switch self {
-            case .idle:         return "Нажми чтобы говорить"
-            case .connecting:   return "Подключаюсь…"
-            case .listening:    return "Слушаю…"
-            case .paused:       return "Пауза · нажми чтобы продолжить"
-            case .thinking:     return "Выполняю…"
-            case .speaking:     return "Говорю…"
+            case .idle:         return "Tap to talk"
+            case .connecting:   return "Connecting…"
+            case .listening:    return "Listening…"
+            case .paused:       return "Paused · tap to resume"
+            case .thinking:     return "Working…"
+            case .speaking:     return "Speaking…"
             case .error(let e): return e
             }
         }
