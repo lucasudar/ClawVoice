@@ -38,10 +38,12 @@ final class AudioManager {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord,
                                 mode: .voiceChat,
-                                options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
+                                options: [.allowBluetooth, .allowBluetoothA2DP, .mixWithOthers])
         try session.setPreferredSampleRate(inputSampleRate)
         try session.setPreferredIOBufferDuration(0.064)
         try session.setActive(true)
+        // Route to headphones if connected, speaker only as fallback
+        try session.overrideOutputAudioPort(.none)
 
         // Connect player to main mixer using Float32 @ 24kHz
         let playerFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
