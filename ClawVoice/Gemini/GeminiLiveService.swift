@@ -28,7 +28,8 @@ final class GeminiLiveService: NSObject {
             return
         }
 
-        let urlString = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta/models/\(model):streamGenerateContent?key=\(apiKey)"
+        // Gemini Live API — BidiGenerateContent WebSocket endpoint (model specified in setup message)
+        let urlString = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=\(apiKey)"
         guard let url = URL(string: urlString) else { return }
 
         urlSession = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
@@ -154,7 +155,27 @@ extension GeminiLiveService: URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         if let error {
             isConnected = false
-            DispatchQueue.main.async { self.delegate?.geminiDidDisconnect(error: error) }
+            let friendly = friendlyError(error)
+            DispatchQueue.main.async { self.delegate?.geminiDidDisconnect(error: friendly) }
         }
+    }
+
+    private func friendlyError(_ error: Error) -> Error {
+        let msg: String
+        if let urlErr = error as? URLError {
+            switch urlErr.code {
+            case .badServerResponse:
+                msg = "Gemini rejected the connection — check your API key in Settings ⚙️"
+            case .notConnectedToInternet, .networkConnectionLost:
+                msg = "No internet connection"
+            case .timedOut:
+                msg = "Connection to Gemini timed out"
+            default:
+                msg = "Gemini error: \(urlErr.localizedDescription)"
+            }
+        } else {
+            msg = error.localizedDescription
+        }
+        return NSError(domain: "ClawVoice", code: 0, userInfo: [NSLocalizedDescriptionKey: msg])
     }
 }
