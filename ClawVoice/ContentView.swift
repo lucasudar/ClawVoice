@@ -119,7 +119,7 @@ struct ContentView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView().environmentObject(settings)
         }
-        .alert("Ошибка подключения", isPresented: Binding(
+        .alert("Connection Error", isPresented: Binding(
             get: { session.lastError != nil },
             set: { if !$0 { session.lastError = nil } }
         )) {

@@ -15,13 +15,13 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
-                    Picker("Модель", selection: $settings.geminiModel) {
+                    Picker("Model", selection: $settings.geminiModel) {
                         ForEach(GeminiConfig.availableModels, id: \.self) { model in
                             Text(model).tag(model)
                         }
                     }
                     .pickerStyle(.menu)
-                    TextField("или введи вручную", text: $settings.geminiModel)
+                    TextField("or type manually", text: $settings.geminiModel)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .font(.system(size: 12, design: .monospaced))
