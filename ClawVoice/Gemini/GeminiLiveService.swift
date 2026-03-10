@@ -115,7 +115,11 @@ final class GeminiLiveService: NSObject {
                 "model": "models/\(settings.geminiModel)",
                 "generationConfig": [
                     "responseModalities": ["AUDIO"],
-                    "thinkingConfig": ["thinkingBudget": 0]
+                    "speechConfig": [
+                        "voiceConfig": [
+                            "prebuiltVoiceConfig": ["voiceName": settings.voiceName]
+                        ]
+                    ]
                 ],
                 "systemInstruction": [
                     "parts": [["text": settings.systemPrompt]]
@@ -137,20 +141,7 @@ final class GeminiLiveService: NSObject {
                             ]
                         ]
                     ]]
-                ],
-                "realtimeInputConfig": [
-                    "automaticActivityDetection": [
-                        "disabled": false,
-                        "startOfSpeechSensitivity": "START_SENSITIVITY_HIGH",
-                        "endOfSpeechSensitivity": "END_SENSITIVITY_LOW",
-                        "silenceDurationMs": 500,
-                        "prefixPaddingMs": 40
-                    ],
-                    "activityHandling": "START_OF_ACTIVITY_INTERRUPTS",
-                    "turnCoverage": "TURN_INCLUDES_ALL_INPUT"
-                ],
-                "inputAudioTranscription": [String: Any](),
-                "outputAudioTranscription": [String: Any]()
+                ]
             ]
         ]
         sendJSON(json)
