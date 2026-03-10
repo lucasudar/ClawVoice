@@ -8,6 +8,12 @@ A minimal iOS voice assistant for [OpenClaw](https://github.com/openclaw/opencla
 
 No video. No camera. No continuous streaming. Just voice.
 
+<p align="center">
+  <img src="assets/screenshot-main.jpg" width="220" alt="Main screen"/>
+  &nbsp;&nbsp;&nbsp;
+  <img src="assets/screenshot-settings.jpg" width="220" alt="Settings screen"/>
+</p>
+
 ---
 
 ## How it's different
