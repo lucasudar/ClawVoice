@@ -2,10 +2,6 @@ import AppIntents
 import Foundation
 
 /// Siri Shortcut — "Hey Siri, [your custom phrase]" activates the assistant.
-///
-/// Setup:
-///   Shortcuts app → New shortcut → Add Action → search "ClawVoice" → Activate Assistant
-///   Tap "Add to Siri" → record your phrase (e.g. "Mr Krabs", "Hey Assistant")
 struct ActivateAssistantIntent: AppIntent {
 
     static var title: LocalizedStringResource = "Activate Assistant"
@@ -22,6 +18,23 @@ struct ActivateAssistantIntent: AppIntent {
             NotificationCenter.default.post(name: .clawVoiceActivate, object: nil)
         }
         return .result()
+    }
+}
+
+/// Makes ClawVoice discoverable in the Shortcuts app and by Siri.
+/// Without this, the intent won't appear in search.
+struct ClawVoiceShortcuts: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(
+            intent: ActivateAssistantIntent(),
+            phrases: [
+                "Activate \(.applicationName)",
+                "Talk to \(.applicationName)",
+                "Open \(.applicationName)",
+            ],
+            shortTitle: "Activate Assistant",
+            systemImageName: "waveform.circle.fill"
+        )
     }
 }
 
