@@ -38,7 +38,7 @@ final class AudioManager {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord,
                                 mode: .voiceChat,
-                                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+                                options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
         try session.setPreferredSampleRate(inputSampleRate)
         try session.setPreferredIOBufferDuration(0.064)
         try session.setActive(true)

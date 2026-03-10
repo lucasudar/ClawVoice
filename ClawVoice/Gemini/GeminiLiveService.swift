@@ -19,7 +19,6 @@ final class GeminiLiveService: NSObject {
     private var urlSession: URLSession?
     private var receiveTask: Task<Void, Never>?
     private let wsDelegate = WebSocketDelegate()
-    private let sendQueue = DispatchQueue(label: "clawvoice.gemini.send", qos: .userInitiated)
 
     // MARK: - Connect / Disconnect
 
@@ -80,30 +79,26 @@ final class GeminiLiveService: NSObject {
     // MARK: - Send
 
     func sendAudio(_ data: Data) {
-        sendQueue.async { [weak self] in
-            let json: [String: Any] = [
-                "realtimeInput": [
-                    "audio": [
-                        "mimeType": "audio/pcm;rate=16000",
-                        "data": data.base64EncodedString()
-                    ]
+        let json: [String: Any] = [
+            "realtimeInput": [
+                "audio": [
+                    "mimeType": "audio/pcm;rate=16000",
+                    "data": data.base64EncodedString()
                 ]
             ]
-            self?.sendJSON(json)
-        }
+        ]
+        sendJSON(json)
     }
 
     func sendToolResponse(id: String, output: String) {
-        sendQueue.async { [weak self] in
-            let json: [String: Any] = [
-                "toolResponse": [
-                    "functionResponses": [
-                        ["id": id, "response": ["output": output]]
-                    ]
+        let json: [String: Any] = [
+            "toolResponse": [
+                "functionResponses": [
+                    ["id": id, "response": ["output": output]]
                 ]
             ]
-            self?.sendJSON(json)
-        }
+        ]
+        sendJSON(json)
     }
 
     // MARK: - Private
@@ -157,7 +152,7 @@ final class GeminiLiveService: NSObject {
         receiveTask = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
-                guard let task = await self.webSocketTask else { break }
+                guard let task = self.webSocketTask else { break }
                 do {
                     let message = try await task.receive()
                     var text: String?

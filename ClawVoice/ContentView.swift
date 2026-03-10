@@ -83,7 +83,7 @@ struct ContentView: View {
                                 .padding(.horizontal, 32)
                         }
                         .frame(maxHeight: 140)
-                        .onChange(of: session.transcript) { _ in
+                        .onChange(of: session.transcript) { _, _ in
                             withAnimation { proxy.scrollTo("bottom") }
                         }
                     }
