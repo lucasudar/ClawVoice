@@ -100,14 +100,28 @@ final class AudioManager {
         isCapturing = false
     }
 
-    /// Pause/resume mic capture. Removes tap entirely when paused — clears iOS mic indicator.
+    /// Pause/resume mic capture. Switches audio session category to clear iOS mic indicator.
     func setMuted(_ muted: Bool) {
         guard isMuted != muted else { return }
         isMuted = muted
         if muted {
+            // Stop mic: remove tap + switch to playback-only session → clears orange dot
             audioEngine.inputNode.removeTap(onBus: 0)
+            audioEngine.stop()
+            let session = AVAudioSession.sharedInstance()
+            try? session.setCategory(.playback, options: [.mixWithOthers])
+            try? session.setActive(true)
         } else {
+            // Resume mic: restore playAndRecord + reinstall tap + restart engine
+            let session = AVAudioSession.sharedInstance()
+            try? session.setCategory(.playAndRecord,
+                                     mode: .voiceChat,
+                                     options: [.allowBluetooth, .allowBluetoothA2DP, .mixWithOthers])
+            try? session.setActive(true)
+            try? session.overrideOutputAudioPort(.none)
             reinstallTap()
+            try? audioEngine.start()
+            playerNode.play()
         }
     }
 
