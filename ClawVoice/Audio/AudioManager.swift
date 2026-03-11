@@ -24,16 +24,7 @@ final class AudioManager {
     private var isMuted        = false  // mute mic while model is speaking (echo prevention)
     private(set) var isUserPaused = false  // user-initiated pause — skip sending but keep engine running
 
-    /// true when any headphones (wired or BT) are connected — enables interruption of model speech
-    var isHeadphonesConnected: Bool {
-        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
-        return outputs.contains { route in
-            route.portType == .headphones ||
-            route.portType == .bluetoothA2DP ||
-            route.portType == .bluetoothHFP ||
-            route.portType == .bluetoothLE
-        }
-    }
+
 
     private var chunkHandler: AudioChunkHandler?
     private let sendQueue      = DispatchQueue(label: "clawvoice.audio.send", qos: .userInitiated)
