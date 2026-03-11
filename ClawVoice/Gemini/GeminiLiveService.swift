@@ -83,26 +83,21 @@ final class GeminiLiveService: NSObject {
     // MARK: - Send
 
     func sendAudio(_ data: Data) {
-        guard isReady else { return }  // don't send before setup complete
+        guard isReady, let task = webSocketTask else { return }
         let b64 = data.base64EncodedString()
-        sendQueue.async { [weak self] in
-            self?.sendJSON([
-                "realtimeInput": [
-                    "audio": ["mimeType": "audio/pcm;rate=16000", "data": b64]
-                ]
-            ])
+        sendQueue.async {
+            Self.sendRaw([
+                "realtimeInput": ["audio": ["mimeType": "audio/pcm;rate=16000", "data": b64]]
+            ], to: task)
         }
     }
 
     func sendToolResponse(id: String, output: String) {
-        sendQueue.async { [weak self] in
-            self?.sendJSON([
-                "toolResponse": [
-                    "functionResponses": [
-                        ["id": id, "response": ["output": output]]
-                    ]
-                ]
-            ])
+        guard let task = webSocketTask else { return }
+        sendQueue.async {
+            Self.sendRaw([
+                "toolResponse": ["functionResponses": [["id": id, "response": ["output": output]]]]
+            ], to: task)
         }
     }
 
@@ -160,9 +155,14 @@ final class GeminiLiveService: NSObject {
     }
 
     private func sendJSON(_ json: [String: Any]) {
+        guard let task = webSocketTask else { return }
+        Self.sendRaw(json, to: task)
+    }
+
+    private nonisolated static func sendRaw(_ json: [String: Any], to task: URLSessionWebSocketTask) {
         guard let data = try? JSONSerialization.data(withJSONObject: json),
               let string = String(data: data, encoding: .utf8) else { return }
-        webSocketTask?.send(.string(string)) { _ in }
+        task.send(.string(string)) { _ in }
     }
 
     private func startReceiving() {
