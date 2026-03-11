@@ -26,6 +26,7 @@ final class AudioManager {
     private var chunkHandler: AudioChunkHandler?
     private let sendQueue      = DispatchQueue(label: "clawvoice.audio.send", qos: .userInitiated)
     private var accumulated    = Data()
+    private var flushTimer:    DispatchSourceTimer?  // periodic flush so silence reaches Gemini VAD
 
     // MARK: - Public API
 
@@ -88,10 +89,12 @@ final class AudioManager {
         try audioEngine.start()
         playerNode.play()
         isCapturing = true
+        startFlushTimer()
     }
 
     func stopCapture() {
         guard isCapturing else { return }
+        stopFlushTimer()
         audioEngine.inputNode.removeTap(onBus: 0)
         playerNode.stop()
         audioEngine.stop()
@@ -100,12 +103,35 @@ final class AudioManager {
         isCapturing = false
     }
 
+    // MARK: - Flush Timer
+
+    private func startFlushTimer() {
+        stopFlushTimer()
+        let timer = DispatchSource.makeTimerSource(queue: sendQueue)
+        // Flush every 50ms so Gemini VAD always receives audio (including silence)
+        timer.schedule(deadline: .now() + .milliseconds(50), repeating: .milliseconds(50))
+        timer.setEventHandler { [weak self] in
+            guard let self, !self.isMuted, !self.accumulated.isEmpty else { return }
+            let chunk = self.accumulated
+            self.accumulated = Data()
+            self.chunkHandler?(chunk)
+        }
+        timer.resume()
+        flushTimer = timer
+    }
+
+    private func stopFlushTimer() {
+        flushTimer?.cancel()
+        flushTimer = nil
+    }
+
     /// Pause/resume mic capture. Switches audio session category to clear iOS mic indicator.
     func setMuted(_ muted: Bool) {
         guard isMuted != muted else { return }
         isMuted = muted
         if muted {
             // Stop mic: remove tap + switch to playback-only session → clears orange dot
+            stopFlushTimer()
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.stop()
             let session = AVAudioSession.sharedInstance()
@@ -122,6 +148,7 @@ final class AudioManager {
             reinstallTap()
             try? audioEngine.start()
             playerNode.play()
+            startFlushTimer()
         }
     }
 

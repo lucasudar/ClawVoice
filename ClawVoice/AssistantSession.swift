@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 /// Central coordinator: owns Gemini + Audio + ToolCallRouter.
 @MainActor
@@ -38,7 +39,9 @@ final class AssistantSession: ObservableObject {
 
     // MARK: - Published
 
-    @Published var state: State = .idle
+    @Published var state: State = .idle {
+        didSet { UIApplication.shared.isIdleTimerDisabled = state.isActive }
+    }
     @Published var transcript: String = ""
     @Published var lastError: String? = nil
     @Published var currentTask: String? = nil  // shown while executing tool calls
