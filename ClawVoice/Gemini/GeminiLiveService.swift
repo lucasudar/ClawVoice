@@ -25,6 +25,7 @@ final class GeminiLiveService: NSObject {
     private let wsDelegate = WebSocketDelegate()
     private let sendQueue = DispatchQueue(label: "clawvoice.gemini.send", qos: .userInitiated)
     private var isReady = false  // true only after setup complete — guard audio sends
+    private var pingTimer: Timer?  // keepalive — prevents Gemini from closing idle connection
 
     // MARK: - Connect / Disconnect
 
@@ -78,6 +79,7 @@ final class GeminiLiveService: NSObject {
 
     func disconnect() {
         isReady = false
+        stopPingTimer()
         receiveTask?.cancel()
         receiveTask = nil
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
@@ -85,6 +87,25 @@ final class GeminiLiveService: NSObject {
         wsDelegate.onOpen = nil
         wsDelegate.onClose = nil
         wsDelegate.onError = nil
+    }
+
+    // MARK: - Keepalive ping
+
+    private func startPingTimer() {
+        stopPingTimer()
+        // Send WS ping every 25s — Gemini closes idle connections after ~60s of silence
+        pingTimer = Timer.scheduledTimer(withTimeInterval: 25, repeats: true) { [weak self] _ in
+            self?.webSocketTask?.sendPing { error in
+                if let error {
+                    print("⚠️ [ClawVoice] WS ping failed: \(error)")
+                }
+            }
+        }
+    }
+
+    private func stopPingTimer() {
+        pingTimer?.invalidate()
+        pingTimer = nil
     }
 
     // MARK: - Send
@@ -208,6 +229,7 @@ final class GeminiLiveService: NSObject {
             print("✅ [Gemini] Setup complete — ready!")
             await MainActor.run {
                 self.isReady = true
+                self.startPingTimer()
                 self.delegate?.geminiDidConnect()
             }
             return
