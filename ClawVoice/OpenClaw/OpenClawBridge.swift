@@ -1,21 +1,33 @@
 import Foundation
 
 /// HTTP client for the OpenClaw gateway /v1/chat/completions endpoint.
+/// Maintains conversation history for the duration of a Gemini session,
+/// so OpenClaw keeps context across multiple tool calls.
 final class OpenClawBridge {
 
     static let shared = OpenClawBridge()
     private init() {}
 
-    private var session: URLSession = {
+    // Persistent conversation history — reset when Gemini session starts
+    private var messages: [[String: String]] = []
+
+    private var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest  = 120
         config.timeoutIntervalForResource = 300
         return URLSession(configuration: config)
     }()
 
+    // MARK: - Session Management
+
+    /// Call when starting a new Gemini session — clears conversation history
+    func resetSession() {
+        messages = []
+    }
+
     // MARK: - Execute task
 
-    /// Sends a task to OpenClaw and returns the assistant's response text.
+    /// Sends a task to OpenClaw with full conversation history and returns the response.
     func execute(task: String) async throws -> String {
         let settings = AppSettings.shared
         guard !settings.openClawToken.isEmpty else {
@@ -27,27 +39,29 @@ final class OpenClawBridge {
             throw OpenClawError.invalidURL(urlString)
         }
 
+        // Append user message to history
+        messages.append(["role": "user", "content": task])
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("application/json",            forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(settings.openClawToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json",                  forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(settings.openClawToken)",  forHTTPHeaderField: "Authorization")
 
         let body: [String: Any] = [
-            "model":    "gpt-4o",   // ignored by OpenClaw, but required by spec
-            "messages": [
-                ["role": "user", "content": task]
-            ]
+            "model":    "gpt-4o",   // ignored by OpenClaw, required by spec
+            "messages": messages    // full history for persistent context
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
 
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             let body = String(data: data, encoding: .utf8) ?? ""
+            // Remove the user message we added since the call failed
+            messages.removeLast()
             throw OpenClawError.httpError(http.statusCode, body)
         }
 
-        // Parse OpenAI-compatible response
         struct ChatResponse: Decodable {
             struct Choice: Decodable {
                 struct Message: Decodable { let content: String }
@@ -57,7 +71,12 @@ final class OpenClawBridge {
         }
 
         let decoded = try JSONDecoder().decode(ChatResponse.self, from: data)
-        return decoded.choices.first?.message.content ?? "(no response)"
+        let content = decoded.choices.first?.message.content ?? "(no response)"
+
+        // Append assistant response to history
+        messages.append(["role": "assistant", "content": content])
+
+        return content
     }
 
     // MARK: - Health check
@@ -68,7 +87,7 @@ final class OpenClawBridge {
         var req = URLRequest(url: url)
         req.timeoutInterval = 5
         req.setValue("Bearer \(settings.openClawToken)", forHTTPHeaderField: "Authorization")
-        return (try? await session.data(for: req)) != nil
+        return (try? await urlSession.data(for: req)) != nil
     }
 
     // MARK: - Errors
@@ -80,12 +99,9 @@ final class OpenClawBridge {
 
         var errorDescription: String? {
             switch self {
-            case .notConfigured:
-                return "OpenClaw is not configured. Go to Settings."
-            case .invalidURL(let url):
-                return "Invalid OpenClaw URL: \(url)"
-            case .httpError(let code, let body):
-                return "OpenClaw returned HTTP \(code): \(body)"
+            case .notConfigured:        return "OpenClaw is not configured. Open Settings ⚙️"
+            case .invalidURL(let url):  return "Invalid OpenClaw URL: \(url)"
+            case .httpError(let code, let body): return "OpenClaw returned HTTP \(code): \(body)"
             }
         }
     }

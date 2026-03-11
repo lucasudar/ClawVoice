@@ -101,6 +101,7 @@ final class AssistantSession: ObservableObject {
         lastError = nil
         state = .connecting
         print("🟡 [ClawVoice] Connecting to Gemini...")
+        OpenClawBridge.shared.resetSession()  // fresh context for new session
         gemini.connect()
     }
 
