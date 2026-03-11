@@ -75,10 +75,8 @@ final class AssistantSession: ObservableObject {
 
     func toggle() {
         switch state {
-        case .idle:
+        case .idle, .error:
             start()
-        case .error:
-            start(preserveSession: true)  // reconnect after failure — keep OpenClaw session UUID
         case .paused:
             resume()
         case .listening, .speaking, .thinking:
@@ -108,7 +106,7 @@ final class AssistantSession: ObservableObject {
         }
     }
 
-    func start(preserveSession: Bool = false) {
+    func start() {
         guard state == .idle || {
             if case .error = state { return true } else { return false }
         }() else { return }
@@ -124,10 +122,8 @@ final class AssistantSession: ObservableObject {
         userTurnActive = false
         lastError = nil
         state = .connecting
-        print("🟡 [ClawVoice] Connecting to Gemini\(preserveSession ? " (preserving session)" : "")...")
-        if !preserveSession {
-            OpenClawBridge.shared.resetSession()  // fresh context for new session
-        }
+        print("🟡 [ClawVoice] Connecting to Gemini...")
+        OpenClawBridge.shared.resetSession()  // fresh context for new session
         gemini.connect()
     }
 
