@@ -65,6 +65,8 @@ result text → Gemini synthesizes natural voice response
 Your headphones or speaker
 ```
 
+**Session context:** each voice session maps to exactly one OpenClaw server session. The context accumulates naturally as you talk. Pause or close the app → next session starts fresh with a clean context.
+
 ---
 
 ## Requirements
@@ -169,7 +171,7 @@ No button tap needed. Works with screen off and any headphones paired with your 
 - **URLSessionWebSocketTask** · no SPM dependencies
 - **AVAudioEngine** · PCM 16 kHz capture, 24 kHz Float32 playback
 - **Gemini Live API** · `v1beta` WebSocket · `gemini-2.5-flash-native-audio-preview-12-2025`
-- **OpenClaw** `/v1/chat/completions` · persistent session via `user` UUID
+- **OpenClaw** `/v1/chat/completions` · one server session per voice session (new session on pause or app close)
 
 ---
 
