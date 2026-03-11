@@ -136,7 +136,7 @@ iOS doesn't allow fully custom always-on wake words, but Siri Shortcuts let you 
 2. Tap the shortcut name → **Add to Siri** → record any phrase you like (e.g. *"Hey assistant"*, *"Yo Krabs"*, your assistant's name, anything)
 3. Say **"Hey Siri, [your phrase]"** — app launches and immediately starts active listening
 
-No button tap needed. Works with screen off, AirPods, Apple Watch, CarPlay.
+No button tap needed. Works with screen off and AirPods.
 
 ---
 
