@@ -93,6 +93,7 @@ final class AssistantSession: ObservableObject {
 
     func resume() {
         if gemini.isConnected {
+            gemini.resetSpeakingState()  // clear stale isModelSpeaking so audio isn't blocked after pause
             audio.resumeCapture()  // restarts engine + mic
             state = .listening
         } else {

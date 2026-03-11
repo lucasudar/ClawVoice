@@ -94,6 +94,11 @@ final class GeminiLiveService: NSObject {
         webSocketTask?.resume()
     }
 
+    /// Reset speaking state — call on resume so stale isModelSpeaking doesn't block audio.
+    func resetSpeakingState() {
+        isModelSpeaking = false
+    }
+
     func disconnect() {
         isReady = false
         stopPingTimer()
@@ -116,7 +121,12 @@ final class GeminiLiveService: NSObject {
             // Dispatch to MainActor to access main-actor-isolated webSocketTask
             Task { @MainActor [weak self] in
                 self?.webSocketTask?.sendPing { error in
-                    if let error { print("⚠️ [ClawVoice] WS ping failed: \(error)") }
+                    if let error {
+                        print("⚠️ [ClawVoice] WS ping failed: \(error) — triggering reconnect")
+                        Task { @MainActor [weak self] in
+                            self?.delegate?.geminiDidDisconnect(error: error)
+                        }
+                    }
                 }
             }
         }
