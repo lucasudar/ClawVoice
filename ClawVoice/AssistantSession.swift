@@ -43,6 +43,8 @@ final class AssistantSession: ObservableObject {
         didSet { UIApplication.shared.isIdleTimerDisabled = state.isActive }
     }
     @Published var transcript: String = ""
+    private var transcriptBuffer: String = ""      // accumulate until word boundary
+    private var transcriptFlushTask: Task<Void, Never>?
     @Published var lastError: String? = nil
     @Published var currentTask: String? = nil  // shown while executing tool calls
 
@@ -98,6 +100,8 @@ final class AssistantSession: ObservableObject {
         reconnectAttempts = 0
         reconnectTask?.cancel()
         transcript = ""
+        transcriptBuffer = ""
+        transcriptFlushTask?.cancel()
         lastError = nil
         state = .connecting
         print("🟡 [ClawVoice] Connecting to Gemini...")
@@ -179,11 +183,35 @@ extension AssistantSession: GeminiLiveServiceDelegate {
 
     nonisolated func geminiDidReceiveText(_ text: String) {
         Task { @MainActor in
-            // Any text (transcription) means user is speaking → unmute
             if text.hasPrefix("You: ") {
                 self.state = .listening
             }
-            self.transcript += text
+
+            // Buffer small chunks — flush on word boundary (space/punctuation) or after 300ms
+            self.transcriptBuffer += text
+            let hasWordBoundary = self.transcriptBuffer.last.map {
+                $0.isWhitespace || $0.isPunctuation
+            } ?? false
+
+            if hasWordBoundary {
+                self.transcript += self.transcriptBuffer
+                self.transcriptBuffer = ""
+                self.transcriptFlushTask?.cancel()
+                self.transcriptFlushTask = nil
+            } else {
+                // Fallback flush after 300ms so it doesn't feel frozen
+                self.transcriptFlushTask?.cancel()
+                self.transcriptFlushTask = Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        if !self.transcriptBuffer.isEmpty {
+                            self.transcript += self.transcriptBuffer
+                            self.transcriptBuffer = ""
+                        }
+                    }
+                }
+            }
         }
     }
 
