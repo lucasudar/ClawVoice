@@ -293,9 +293,12 @@ final class GeminiLiveService: NSObject {
             }
 
             // Turn complete — model finished speaking, switch back to listening
+            // Delay clearing isModelSpeaking by 500ms so echo from speaker drains before mic opens
             if let turnComplete = serverContent["turnComplete"] as? Bool, turnComplete {
                 print("✅ [Gemini] Turn complete")
-                await MainActor.run { self.isModelSpeaking = false; self.delegate?.geminiDidTurnComplete(interrupted: false) }
+                await MainActor.run { self.delegate?.geminiDidTurnComplete(interrupted: false) }
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                await MainActor.run { self.isModelSpeaking = false }
             }
         }
     }
