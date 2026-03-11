@@ -37,6 +37,7 @@ final class GeminiLiveService: NSObject {
         // Without this, old receiveTask keeps reading a dead socket, throws an error,
         // and triggers a second geminiDidDisconnect → double scheduleReconnect cascade.
         isReady = false
+        isModelSpeaking = false  // reset so audio isn't silently dropped after reconnect
         stopPingTimer()
         receiveTask?.cancel()
         receiveTask = nil
