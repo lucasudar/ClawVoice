@@ -186,7 +186,8 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                     // Echo suppression: when using phone speaker, skip audio while model speaks.
                     // With headphones: always send (AEC handles it, enables interruption).
                     // headphonesConnected is cached on main thread — safe to read here.
-                    if self.gemini.isModelSpeaking && !self.audio.headphonesConnected { return }
+                    // Echo suppression removed — iOS voiceChat AEC handles speaker feedback.
+                    // Keeping this guard breaks user interruption while Gemini speaks.
                     self.gemini.sendAudio(chunk)
                 }
             } catch {

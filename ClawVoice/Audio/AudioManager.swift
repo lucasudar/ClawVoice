@@ -163,15 +163,17 @@ final class AudioManager {
         // Engine must keep running so playerNode can play Gemini's audio
     }
 
-    /// User-initiated pause: set flag only — engine keeps running so VAD stays calibrated.
-    /// Orange dot stays on (acceptable: stopping engine breaks Gemini VAD after resume).
+    /// User-initiated pause: stop AI audio immediately and halt mic sending.
+    /// Engine keeps running so VAD stays calibrated and resumes cleanly.
     func pauseCapture() {
         isUserPaused = true
+        playerNode.stop()  // cut AI audio immediately on pause
     }
 
     /// User-initiated resume: clear pause flag — audio immediately flows to Gemini again.
     func resumeCapture() {
         isUserPaused = false
+        if !playerNode.isPlaying { playerNode.play() }  // re-arm player for incoming AI audio
     }
 
     private func reinstallTap() {
