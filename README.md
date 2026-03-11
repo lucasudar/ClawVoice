@@ -1,5 +1,9 @@
 # ClawVoice
 
+<p align="center">
+  <img src="assets/logo.svg" width="120" alt="ClawVoice"/>
+</p>
+
 > ⚠️ **Work in progress** — actively developed. Core voice loop works; some rough edges remain.
 
 A minimal iOS voice assistant for [OpenClaw](https://github.com/openclaw/openclaw) server owners.
