@@ -22,6 +22,7 @@ final class AudioManager {
     private let playerNode     = AVAudioPlayerNode()
     private var isCapturing    = false
     private var isMuted        = false  // mute mic while model is speaking (echo prevention)
+    private(set) var isUserPaused = false  // user-initiated pause — skip sending but keep engine running
 
     private var chunkHandler: AudioChunkHandler?
     private let sendQueue      = DispatchQueue(label: "clawvoice.audio.send", qos: .userInitiated)
@@ -66,7 +67,7 @@ final class AudioManager {
         let converter       = needsResample ? AVAudioConverter(from: nativeFormat, to: resampleFormat) : nil
 
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: nativeFormat) { [weak self] buffer, _ in
-            guard let self, !self.isMuted else { return }
+            guard let self, !self.isMuted, !self.isUserPaused else { return }
 
             let pcmData: Data
             if let converter {
@@ -132,30 +133,15 @@ final class AudioManager {
         // Engine must keep running so playerNode can play Gemini's audio
     }
 
-    /// User-initiated pause: fully stop mic + switch session to clear iOS orange dot.
+    /// User-initiated pause: set flag only — engine keeps running so VAD stays calibrated.
+    /// Orange dot stays on (acceptable: stopping engine breaks Gemini VAD after resume).
     func pauseCapture() {
-        guard isCapturing else { return }
-        stopFlushTimer()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, options: [.mixWithOthers])
-        try? session.setActive(true)
+        isUserPaused = true
     }
 
-    /// User-initiated resume: restore mic + restart engine.
+    /// User-initiated resume: clear pause flag — audio immediately flows to Gemini again.
     func resumeCapture() {
-        guard isCapturing else { return }
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playAndRecord,
-                                 mode: .voiceChat,
-                                 options: [.allowBluetoothHFP, .allowBluetoothA2DP, .mixWithOthers])
-        try? session.setActive(true)
-        try? session.overrideOutputAudioPort(.none)
-        reinstallTap()
-        try? audioEngine.start()
-        playerNode.play()
-        startFlushTimer()
+        isUserPaused = false
     }
 
     private func reinstallTap() {
@@ -169,7 +155,7 @@ final class AudioManager {
         let converter = needsResample ? AVAudioConverter(from: nativeFormat, to: resampleFormat) : nil
 
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: nativeFormat) { [weak self] buffer, _ in
-            guard let self, !self.isMuted else { return }
+            guard let self, !self.isMuted, !self.isUserPaused else { return }
             let pcmData: Data
             if let converter {
                 guard let resampled = self.convert(buffer, using: converter, to: resampleFormat) else { return }

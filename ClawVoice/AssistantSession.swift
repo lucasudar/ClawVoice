@@ -202,7 +202,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 // Fallback flush after 300ms so it doesn't feel frozen
                 self.transcriptFlushTask?.cancel()
                 self.transcriptFlushTask = Task {
-                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    try? await Task.sleep(nanoseconds: 600_000_000)
                     guard !Task.isCancelled else { return }
                     await MainActor.run {
                         if !self.transcriptBuffer.isEmpty {
