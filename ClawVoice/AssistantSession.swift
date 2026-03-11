@@ -161,9 +161,10 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             do {
                 try self.audio.startCapture { [weak self] chunk in
                     guard let self else { return }
-                    // VisionClaw pattern: skip sending while model speaks (echo suppression)
-                    // Engine stays running so playback works — no engine stop/restart
-                    if self.gemini.isModelSpeaking { return }
+                    // Echo suppression only when using phone speaker (no headphones).
+                    // With headphones: always send audio → Gemini can hear user and interrupt.
+                    // With speaker: suppress while model speaks to avoid feedback loop.
+                    if self.gemini.isModelSpeaking && !self.audio.isHeadphonesConnected { return }
                     self.gemini.sendAudio(chunk)
                 }
             } catch {
