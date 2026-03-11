@@ -42,8 +42,10 @@ final class AssistantSession: ObservableObject {
     @Published var state: State = .idle {
         didSet { UIApplication.shared.isIdleTimerDisabled = state.isActive }
     }
-    @Published var transcript: String = ""
-    private var transcriptBuffer: String = ""      // accumulate until word boundary
+    @Published var userTranscript: String = ""   // what user said (rolling, cleared on turn start)
+    @Published var aiTranscript: String = ""     // what AI said
+    private var userBuffer: String = ""
+    private var aiBuffer: String = ""
     private var transcriptFlushTask: Task<Void, Never>?
     @Published var lastError: String? = nil
     @Published var currentTask: String? = nil  // shown while executing tool calls
@@ -99,8 +101,10 @@ final class AssistantSession: ObservableObject {
 
         reconnectAttempts = 0
         reconnectTask?.cancel()
-        transcript = ""
-        transcriptBuffer = ""
+        userTranscript = ""
+        aiTranscript = ""
+        userBuffer = ""
+        aiBuffer = ""
         transcriptFlushTask?.cancel()
         lastError = nil
         state = .connecting
@@ -179,34 +183,40 @@ extension AssistantSession: GeminiLiveServiceDelegate {
         }
     }
 
-    nonisolated func geminiDidReceiveText(_ text: String) {
+    nonisolated func geminiDidReceiveText(_ text: String) { }  // unused (transcription via separate delegates)
+
+    nonisolated func geminiDidReceiveUserText(_ text: String) {
         Task { @MainActor in
-            if text.hasPrefix("You: ") {
-                self.state = .listening
-            }
+            self.aiTranscript = ""  // clear AI text when user starts speaking
+            self.appendBuffered(text, to: \.userBuffer, publish: \.userTranscript)
+        }
+    }
 
-            // Buffer small chunks — flush on word boundary (space/punctuation) or after 300ms
-            self.transcriptBuffer += text
-            let hasWordBoundary = self.transcriptBuffer.last.map {
-                $0.isWhitespace || $0.isPunctuation
-            } ?? false
+    nonisolated func geminiDidReceiveAIText(_ text: String) {
+        Task { @MainActor in
+            self.appendBuffered(text, to: \.aiBuffer, publish: \.aiTranscript)
+        }
+    }
 
-            if hasWordBoundary {
-                self.transcript += self.transcriptBuffer
-                self.transcriptBuffer = ""
-                self.transcriptFlushTask?.cancel()
-                self.transcriptFlushTask = nil
-            } else {
-                // Fallback flush after 300ms so it doesn't feel frozen
-                self.transcriptFlushTask?.cancel()
-                self.transcriptFlushTask = Task {
-                    try? await Task.sleep(nanoseconds: 600_000_000)
-                    guard !Task.isCancelled else { return }
-                    await MainActor.run {
-                        if !self.transcriptBuffer.isEmpty {
-                            self.transcript += self.transcriptBuffer
-                            self.transcriptBuffer = ""
-                        }
+    @MainActor
+    private func appendBuffered(_ text: String,
+                                 to buffer: ReferenceWritableKeyPath<AssistantSession, String>,
+                                 publish target: ReferenceWritableKeyPath<AssistantSession, String>) {
+        self[keyPath: buffer] += text
+        let hasWordBoundary = self[keyPath: buffer].last.map { $0.isWhitespace || $0.isPunctuation } ?? false
+        if hasWordBoundary {
+            self[keyPath: target] += self[keyPath: buffer]
+            self[keyPath: buffer] = ""
+            transcriptFlushTask?.cancel()
+        } else {
+            transcriptFlushTask?.cancel()
+            transcriptFlushTask = Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if !self[keyPath: buffer].isEmpty {
+                        self[keyPath: target] += self[keyPath: buffer]
+                        self[keyPath: buffer] = ""
                     }
                 }
             }

@@ -72,19 +72,32 @@ struct ContentView: View {
                 }
 
                 // Transcript
-                if !session.transcript.isEmpty {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            Text(session.transcript)
-                                .id("bottom")
-                                .font(.system(size: 14, design: .rounded))
-                                .foregroundColor(.white.opacity(0.5))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 32)
+                let hasTranscript = !session.userTranscript.isEmpty || !session.aiTranscript.isEmpty
+                if hasTranscript {
+                    VStack(spacing: 6) {
+                        if !session.userTranscript.isEmpty {
+                            HStack(alignment: .top, spacing: 6) {
+                                Text("You:")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.blue.opacity(0.8))
+                                Text(session.userTranscript)
+                                    .font(.system(size: 13, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, 32)
                         }
-                        .frame(maxHeight: 140)
-                        .onChange(of: session.transcript) { _, _ in
-                            withAnimation { proxy.scrollTo("bottom") }
+                        if !session.aiTranscript.isEmpty {
+                            HStack(alignment: .top, spacing: 6) {
+                                Text("AI:")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.green.opacity(0.8))
+                                Text(session.aiTranscript)
+                                    .font(.system(size: 13, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, 32)
                         }
                     }
                 }

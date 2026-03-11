@@ -3,9 +3,11 @@ import Foundation
 protocol GeminiLiveServiceDelegate: AnyObject {
     func geminiDidConnect()
     func geminiDidReceiveAudio(_ data: Data)
-    func geminiDidReceiveText(_ text: String)
+    func geminiDidReceiveText(_ text: String)   // legacy inline text (non-transcription)
+    func geminiDidReceiveUserText(_ text: String) // input transcription chunks
+    func geminiDidReceiveAIText(_ text: String)   // output transcription chunks
     func geminiDidReceiveToolCall(id: String, name: String, args: [String: String])
-    func geminiDidTurnComplete(interrupted: Bool)  // model finished speaking (or was interrupted)
+    func geminiDidTurnComplete(interrupted: Bool)
     func geminiDidDisconnect(error: Error?)
 }
 
@@ -260,11 +262,12 @@ final class GeminiLiveService: NSObject {
             if let t = serverContent["inputTranscription"] as? [String: Any],
                let txt = t["text"] as? String, !txt.isEmpty {
                 print("🎙 You: \(txt)")
-                await MainActor.run { self.delegate?.geminiDidReceiveText("You: \(txt)\n") }
+                await MainActor.run { self.delegate?.geminiDidReceiveUserText(txt) }
             }
             if let t = serverContent["outputTranscription"] as? [String: Any],
                let txt = t["text"] as? String, !txt.isEmpty {
                 print("🤖 AI: \(txt)")
+                await MainActor.run { self.delegate?.geminiDidReceiveAIText(txt) }
             }
 
             // Turn complete — model finished speaking, switch back to listening
