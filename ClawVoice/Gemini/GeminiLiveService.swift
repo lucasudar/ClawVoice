@@ -19,6 +19,8 @@ final class GeminiLiveService: NSObject {
     private var urlSession: URLSession?
     private var receiveTask: Task<Void, Never>?
     private let wsDelegate = WebSocketDelegate()
+    private let sendQueue = DispatchQueue(label: "clawvoice.gemini.send", qos: .userInitiated)
+    private var isReady = false  // true only after setup complete — guard audio sends
 
     // MARK: - Connect / Disconnect
 
@@ -67,6 +69,7 @@ final class GeminiLiveService: NSObject {
     }
 
     func disconnect() {
+        isReady = false
         receiveTask?.cancel()
         receiveTask = nil
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
@@ -79,26 +82,27 @@ final class GeminiLiveService: NSObject {
     // MARK: - Send
 
     func sendAudio(_ data: Data) {
-        let json: [String: Any] = [
-            "realtimeInput": [
-                "audio": [
-                    "mimeType": "audio/pcm;rate=16000",
-                    "data": data.base64EncodedString()
+        guard isReady else { return }  // don't send before setup complete
+        let b64 = data.base64EncodedString()
+        sendQueue.async { [weak self] in
+            self?.sendJSON([
+                "realtimeInput": [
+                    "audio": ["mimeType": "audio/pcm;rate=16000", "data": b64]
                 ]
-            ]
-        ]
-        sendJSON(json)
+            ])
+        }
     }
 
     func sendToolResponse(id: String, output: String) {
-        let json: [String: Any] = [
-            "toolResponse": [
-                "functionResponses": [
-                    ["id": id, "response": ["output": output]]
+        sendQueue.async { [weak self] in
+            self?.sendJSON([
+                "toolResponse": [
+                    "functionResponses": [
+                        ["id": id, "response": ["output": output]]
+                    ]
                 ]
-            ]
-        ]
-        sendJSON(json)
+            ])
+        }
     }
 
     // MARK: - Private
@@ -118,6 +122,18 @@ final class GeminiLiveService: NSObject {
                 ],
                 "systemInstruction": [
                     "parts": [["text": settings.systemPrompt]]
+                ],
+                // VAD: tells Gemini when user stops speaking → triggers response
+                "realtimeInputConfig": [
+                    "automaticActivityDetection": [
+                        "disabled": false,
+                        "startOfSpeechSensitivity": "START_SENSITIVITY_HIGH",
+                        "endOfSpeechSensitivity": "END_SENSITIVITY_LOW",
+                        "silenceDurationMs": 800,
+                        "prefixPaddingMs": 40
+                    ],
+                    "activityHandling": "START_OF_ACTIVITY_INTERRUPTS",
+                    "turnCoverage": "TURN_INCLUDES_ALL_INPUT"
                 ],
                 "tools": [
                     ["functionDeclarations": [
@@ -181,7 +197,10 @@ final class GeminiLiveService: NSObject {
 
         if json["setupComplete"] != nil {
             print("✅ [Gemini] Setup complete — ready!")
-            await MainActor.run { self.delegate?.geminiDidConnect() }
+            await MainActor.run {
+                self.isReady = true
+                self.delegate?.geminiDidConnect()
+            }
             return
         }
 
