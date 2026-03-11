@@ -35,7 +35,11 @@ final class GeminiLiveService: NSObject {
             return
         }
 
-        let baseURL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
+        // v1beta supports realtimeInputConfig + VAD for gemini-2.5-flash-native-audio models
+        // v1alpha needed for gemini-2.0-flash-live-001 (v1beta returns 1008 for that model)
+        let model = AppSettings.shared.geminiModel
+        let apiVersion = model.contains("native-audio") || model.contains("2.5") ? "v1beta" : "v1alpha"
+        let baseURL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.\(apiVersion).GenerativeService.BidiGenerateContent"
         guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else { return }
 
         let config = URLSessionConfiguration.default
