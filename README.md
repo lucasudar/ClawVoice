@@ -4,41 +4,79 @@
   <img src="assets/logo.svg" width="120" alt="ClawVoice"/>
 </p>
 
-> ⚠️ **Work in progress** — actively developed. Core voice loop works; some rough edges remain.
-
-A minimal iOS voice assistant for [OpenClaw](https://github.com/openclaw/openclaw) server owners.
-
-**Tap to talk** (or trigger via Siri Shortcut) → **Gemini Live** handles real-time voice I/O → **OpenClaw** executes actions with Claude → response spoken back through your phone or headphones.
-
-No video. No camera. No continuous streaming. Just voice.
-
-**Works with screen off** — audio session stays active when the display sleeps, so you can lock your phone and keep talking hands-free.
+<p align="center">
+  <strong>Your OpenClaw server. Your voice. No screen required.</strong>
+</p>
 
 <p align="center">
-  <img src="assets/screenshot-main.png" width="220" alt="Main screen"/>
+  <img src="assets/screenshot-main.png" width="200" alt="Main screen"/>
   &nbsp;&nbsp;&nbsp;
-  <img src="assets/screenshot-settings-v2.png" width="220" alt="Settings screen"/>
+  <img src="assets/screenshot-settings-v2.png" width="200" alt="Settings screen"/>
 </p>
 
 ---
 
-## How it's different
+## What makes it different
 
-Most OpenClaw voice clients use push-to-talk + basic TTS. ClawVoice uses **Gemini Live API** — a real-time bidirectional audio WebSocket — so the conversation feels natural: Gemini listens, thinks, speaks, and can be interrupted mid-sentence. OpenClaw handles all the actual intelligence and tool execution (Claude, your skills, your data).
+Most voice assistants use basic TTS and push-to-talk buttons.
+
+ClawVoice uses **Gemini Live API** — a real-time bidirectional audio stream. You talk naturally, Gemini listens, understands, and responds with native voice synthesis. You can interrupt it mid-sentence. It hears you even with the screen off. All the heavy lifting — memory, tools, web search, messaging — runs on your own **OpenClaw** server via Claude.
+
+| Other apps | ClawVoice |
+|---|---|
+| Push-to-talk button | Always listening |
+| Basic TTS (robotic) | Gemini Live native voice |
+| Cloud-only brain | Your OpenClaw server |
+| Screen must be on | Works with screen off |
 
 ---
 
-## Prerequisites
+## Key features
 
-You need **all three** of the following before setting up the app:
+- 🎙 **Always listening** — tap once to start, speak naturally
+- 🔒 **Screen off** — lock your phone and keep talking; audio session stays alive
+- 🎧 **Any headphones** — AirPods, wired, Bluetooth; speaker mode as fallback  
+- ⚡ **Gemini 2.5 Flash** — the fastest native audio model available (`gemini-2.5-flash-native-audio-preview-12-2025`)
+- 🤖 **OpenClaw backend** — Claude executes actions: web search, messages, reminders, smart home, anything your server can do
+- 🍎 **Hey Siri activation** — say *"Hey Siri, Mr. Krabs"* to launch and start listening immediately
+- 🔋 **Battery friendly** — minimal UI, no video, no camera, no polling
+- 🔐 **Private** — your keys, your server, no third-party cloud routing
 
-### 1. OpenClaw server
+---
 
-OpenClaw must be running and reachable from your iPhone. Follow the [official setup guide](https://docs.openclaw.ai).
+## How it works
 
-The gateway config (`~/.openclaw/openclaw.json`) must have the `/v1/chat/completions` endpoint enabled:
+```
+You speak
+    │  PCM audio · 16 kHz
+    ▼
+Gemini Live API (Google)
+    │  understands intent → calls execute(task)
+    ▼
+ClawVoice app
+    │  POST /v1/chat/completions
+    ▼
+OpenClaw server  (your machine, via Tailscale)
+    │  Claude runs tools — search, messages, calendar, skills...
+    ▼
+result text → Gemini synthesizes natural voice response
+    │  PCM audio · 24 kHz
+    ▼
+Your headphones or speaker
+```
 
-```json
+---
+
+## Requirements
+
+**You need all three before setup:**
+
+### 1 · OpenClaw server
+
+An [OpenClaw](https://openclaw.ai) gateway running on your machine with `/v1/chat/completions` enabled:
+
+```json5
+// ~/.openclaw/openclaw.json
 {
   "gateway": {
     "port": 18789,
@@ -49,248 +87,89 @@ The gateway config (`~/.openclaw/openclaw.json`) must have the `/v1/chat/complet
     },
     "auth": {
       "mode": "token",
-      "token": "your-gateway-token-here"
+      "token": "your-gateway-token"
     }
   }
 }
 ```
 
-After editing, restart the gateway:
 ```bash
 openclaw gateway restart
 ```
 
-### 2. Tailscale (recommended for remote access)
+### 2 · Tailscale
 
-Tailscale lets your iPhone reach your home server securely over HTTPS from anywhere — no port forwarding needed.
+Tailscale connects your iPhone to your home server over an encrypted VPN — no port forwarding, works anywhere, free tier is enough.
 
-**On your server (Docker Compose example):**
+**Install on your server**, then get the machine's Tailscale URL from [login.tailscale.com](https://login.tailscale.com) — it looks like `https://your-machine.tail06d585.ts.net`.
 
-```yaml
-services:
-  tailscale:
-    image: tailscale/tailscale:latest
-    container_name: tailscale
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
-      - SYS_PTRACE
-    environment:
-      - TS_AUTHKEY=tskey-auth-YOUR_KEY_HERE
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_SERVE_CONFIG=/config/serve-config.json
-    volumes:
-      - /DATA/AppData/tailscale:/var/lib/tailscale
-      - /DATA/AppData/tailscale/serve-config.json:/config/serve-config.json
-    restart: unless-stopped
-```
+**Install on your iPhone** from the App Store and log in to the same account.
 
-**`serve-config.json`** (proxies HTTPS → OpenClaw):
-```json
-{
-  "TCP": { "443": { "HTTPS": true } },
-  "Web": {
-    "${TS_CERT_DOMAIN}:443": {
-      "Handlers": { "/": { "Proxy": "http://localhost:18789" } }
-    }
-  }
-}
-```
+> **Same Wi-Fi?** You can skip Tailscale and use your server's local IP: `http://192.168.1.x:18789`.
 
-After Tailscale is up, your server is accessible at `https://your-machine.tail06d585.ts.net`. Enable HTTPS in the [Tailscale admin console](https://login.tailscale.com/admin/dns).
+### 3 · Gemini API key
 
-> **Without Tailscale:** you can use a local IP (`http://192.168.1.x:18789`) if your iPhone and server are on the same Wi-Fi.
-
-### 3. Gemini API key
-
-Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
-
-The app uses the **Gemini Live API** (`gemini-2.5-flash-native-audio-preview-12-2025` model) — a real-time audio WebSocket. This is different from the standard Gemini text API; make sure your key has Live API access (free tier works).
+Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). The Live API is included in the free tier.
 
 ---
 
-## App Setup
-
-### 1. Clone & open
+## Setup
 
 ```bash
 git clone https://github.com/lucasudar/clawvoice-ios.git
 open clawvoice-ios/ClawVoice.xcodeproj
 ```
 
-That's it — the `.xcodeproj` is included, no manual project setup needed.
+1. **Signing** → Xcode → ClawVoice target → Signing & Capabilities → set your Team and a unique Bundle ID
+2. **Keys** → tap ⚙️ in the app after launch, enter your Gemini key, OpenClaw URL and token
+3. **Run** → Cmd+R → allow microphone when prompted
 
-### 2. Set your Bundle ID & Team
-
-In Xcode:
-1. Click the **ClawVoice** project in the left sidebar
-2. Select the **ClawVoice** target → **Signing & Capabilities**
-3. Set **Team** to your Apple Developer account
-4. Change **Bundle Identifier** to something unique (e.g. `com.yourname.ClawVoice`)
-
-> You need a free Apple Developer account to run on a real device. Free accounts can sideload apps — no paid membership required.
-
-### 3. Configure keys
-
-Open **`ClawVoice/Secrets.swift`** and fill in your values:
-
-```swift
-struct Secrets {
-    static let geminiApiKey  = "AIza..."           // Gemini API key
-    static let openClawHost  = "https://your-machine.tail06d585.ts.net"  // or http://192.168.1.x
-    static let openClawPort  = 443                 // 443 for Tailscale HTTPS, 18789 for local HTTP
-    static let openClawToken = "your-gateway-token"
-}
-```
-
-Or leave `Secrets.swift` empty and configure everything inside the app via **Settings ⚙️** after launch.
-
-### 4. What is Info.plist?
-
-`Info.plist` is an iOS configuration file that declares app permissions and capabilities. The one in this repo is already configured correctly — **you don't need to edit it**. It contains:
-
-- `NSMicrophoneUsageDescription` — the text iOS shows when asking for microphone permission. Required for any app that uses the mic.
-- `UIBackgroundModes: [audio]` — allows the app to keep audio running when the screen is off. Without this, the mic would stop as soon as you lock the phone.
-
-If Xcode shows a "signing" error related to entitlements, just make sure your Bundle ID is unique (step 2 above).
-
-### 5. Build & run
-
-Select your iPhone as the target → **Cmd+R**.
-
-On first launch, iOS will ask for microphone permission — tap **Allow**.
+A free Apple ID is enough to run on your own device — no paid developer account needed.
 
 ---
 
-## Using the app
+## Siri Shortcut
 
-| Action | Result |
-|--------|--------|
-| Tap orb | Start / pause listening |
-| Tap while listening | Pause (mic off, connection stays alive) |
-| Tap while paused | Resume listening |
-| Double-tap (future) | End session |
+iOS doesn't allow custom always-on wake words, but Siri Shortcuts get you there:
 
-**Orb colors:**
-- ⚪ White — idle, tap to start
-- 🔵 Blue pulsing — listening
-- ⚫ Gray still — paused
-- 🟡 Amber — working (calling OpenClaw)
-- 🟢 Green breathing — Gemini speaking
-
----
-
-## Siri Shortcut (hands-free activation)
-
-iOS doesn't allow custom always-on wake words, but you can use a Siri Shortcut to trigger the app with a custom phrase:
-
-1. Open **Shortcuts** app → tap **+**
-2. Add Action → search **ClawVoice** → select **Activate Assistant**
-3. Tap the shortcut name → rename it (e.g. *Mr Krabs*)
-4. Tap **Add to Siri** → record your phrase
-5. Say **"Hey Siri, Mr Krabs"** — app opens and starts listening immediately
+1. **Shortcuts app** → **+** → Add Action → search *ClawVoice* → **Activate Assistant**
+2. Tap the shortcut name → **Add to Siri** → record your phrase (e.g. *"Mr. Krabs"*)
+3. Say **"Hey Siri, Mr. Krabs"** — app launches and starts listening immediately
 
 Works with screen off, AirPods, Apple Watch.
 
 ---
 
-## Architecture
+## Permissions
 
-```
-iPhone mic
-    │ PCM 16kHz (100ms chunks)
-    ▼
-Gemini Live API  ←──────────────────────────────────┐
-    │ tool call: execute(task: "...")                │
-    ▼                                               │
-ClawVoice app                                       │
-    │ POST /v1/chat/completions                      │
-    ▼                                               │
-OpenClaw Gateway (your server)                      │
-    │ Claude processes task, runs skills             │
-    ▼                                               │
-  result text ────────────────────────────────────>─┘
-                                    Gemini speaks the result
-                                    (PCM 24kHz → speaker)
-```
-
----
-
-## Server: Docker Compose reference
-
-Minimal compose setup with OpenClaw + Tailscale:
-
-```yaml
-services:
-  openclaw:
-    image: ghcr.io/openclaw/openclaw:latest
-    container_name: openclaw-gateway
-    ports:
-      - "18789:18789"
-    volumes:
-      - /DATA/AppData/openclaw:/home/node/.openclaw
-    environment:
-      - ANTHROPIC_API_KEY=sk-ant-...
-    restart: unless-stopped
-
-  tailscale:
-    image: tailscale/tailscale:latest
-    container_name: tailscale
-    network_mode: host
-    cap_add: [NET_ADMIN, SYS_PTRACE]
-    environment:
-      - TS_AUTHKEY=tskey-auth-...
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_SERVE_CONFIG=/config/serve-config.json
-    volumes:
-      - /DATA/AppData/tailscale:/var/lib/tailscale
-      - /DATA/AppData/tailscale/serve-config.json:/config/serve-config.json
-    restart: unless-stopped
-```
-
----
-
-## File structure
-
-```
-ClawVoice/
-├── ClawVoiceApp.swift          # App entry point
-├── ContentView.swift           # Main UI — animated orb + status
-├── SettingsView.swift          # In-app configuration
-├── AppSettings.swift           # UserDefaults persistence
-├── AssistantSession.swift      # Central coordinator
-├── Secrets.swift               # API keys (fill in before building)
-├── Audio/
-│   └── AudioManager.swift      # Mic capture (16kHz) + playback (24kHz Float32)
-├── Gemini/
-│   ├── GeminiLiveService.swift # WebSocket client for Gemini Live API
-│   ├── GeminiConfig.swift      # Model + voice config
-│   └── GeminiModels.swift      # JSON encode/decode types
-├── OpenClaw/
-│   ├── OpenClawBridge.swift    # HTTP client → /v1/chat/completions
-│   └── ToolCallRouter.swift    # Routes Gemini tool calls to OpenClaw
-└── Intents/
-    └── AssistantIntent.swift   # Siri Shortcut integration
-```
+| Permission | Why |
+|---|---|
+| **Microphone** | To hear your voice |
+| **Background audio** | To keep listening when the screen is off |
 
 ---
 
 ## Troubleshooting
 
-**"Connection Error" on first tap**
-→ Check your Gemini API key in Settings ⚙️. Make sure it has Live API access.
+**"Connection Error" on first tap** — check your Gemini API key in Settings ⚙️
 
-**OpenClaw not reachable**
-→ Test the connection in Settings → "Test Connection". Make sure Tailscale is running on both your phone and server. Check that `chatCompletions.enabled: true` in `openclaw.json`.
+**OpenClaw not responding** — confirm Tailscale is connected on both devices; verify `chatCompletions.enabled: true` in your gateway config
 
-**Choppy audio**
-→ Try wired headphones or AirPods. Bluetooth audio latency can cause gaps.
+**Gemini error 1008** — try a different model in Settings; Google occasionally renames Live API models. Try `gemini-2.0-flash-live-001` as fallback
 
-**Gemini model error (1008 policy violation)**
-→ In Settings, try a different model from the dropdown. Google frequently renames Live API models. Recommended: `gemini-2.5-flash-native-audio-preview-12-2025`. Fallback: `gemini-2.0-flash-live-001`.
+**Echo / assistant hears itself** — happens when using phone speaker without headphones; the 500ms mute window after each response suppresses most echo. Use headphones for best results
 
-**App stops when screen locks**
-→ Make sure `UIBackgroundModes: audio` is in Info.plist (it is by default in this repo). Check that microphone permission is granted in iOS Settings → Privacy → Microphone.
+**Choppy audio on Bluetooth** — prefer AirPods or wired headphones; generic BT headsets sometimes add codec latency
+
+---
+
+## Tech stack
+
+- **SwiftUI** · iOS 17+
+- **URLSessionWebSocketTask** · no SPM dependencies
+- **AVAudioEngine** · PCM 16 kHz capture, 24 kHz Float32 playback
+- **Gemini Live API** · `v1beta` WebSocket · `gemini-2.5-flash-native-audio-preview-12-2025`
+- **OpenClaw** `/v1/chat/completions` · persistent session via `user` UUID
 
 ---
 
