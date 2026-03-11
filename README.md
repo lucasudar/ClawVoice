@@ -20,7 +20,7 @@
 
 Most voice assistants use basic TTS and push-to-talk buttons.
 
-ClawVoice uses **Gemini Live API** — a real-time bidirectional audio stream. You talk naturally, Gemini listens, understands, and responds with native voice synthesis. You can interrupt it mid-sentence. It hears you even with the screen off. All the heavy lifting — memory, tools, web search, messaging — runs on your own **OpenClaw** server via Claude.
+ClawVoice uses **Gemini Live API** — a real-time bidirectional audio stream. You talk naturally, Gemini listens, understands, and responds with native voice synthesis. You can interrupt it mid-sentence. It hears you even with the screen off. All the heavy lifting — memory, tools, web search, messaging — runs on your own **OpenClaw** server with whichever AI model you've configured.
 
 | Other apps | ClawVoice |
 |---|---|
@@ -37,7 +37,7 @@ ClawVoice uses **Gemini Live API** — a real-time bidirectional audio stream. Y
 - 🔒 **Screen off** — lock your phone and keep talking; audio session stays alive
 - 🎧 **Any headphones** — AirPods, wired, Bluetooth; speaker mode as fallback  
 - ⚡ **Gemini 2.5 Flash** — the fastest native audio model available (`gemini-2.5-flash-native-audio-preview-12-2025`)
-- 🤖 **OpenClaw backend** — Claude executes actions: web search, messages, reminders, smart home, anything your server can do
+- 🤖 **OpenClaw backend** — your AI model executes actions: web search, messages, reminders, smart home, anything your server can do (supports any provider OpenClaw supports)
 - 🍎 **Hey Siri activation** — say *"Hey Siri, Mr. Krabs"* to launch and start listening immediately
 - 🔋 **Battery friendly** — minimal UI, no video, no camera, no polling
 - 🔐 **Private** — your keys, your server, no third-party cloud routing
@@ -57,7 +57,7 @@ ClawVoice app
     │  POST /v1/chat/completions
     ▼
 OpenClaw server  (your machine, via Tailscale)
-    │  Claude runs tools — search, messages, calendar, skills...
+    │  your AI model runs tools — search, messages, calendar, skills...
     ▼
 result text → Gemini synthesizes natural voice response
     │  PCM audio · 24 kHz
