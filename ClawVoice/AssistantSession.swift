@@ -65,6 +65,7 @@ final class AssistantSession: ObservableObject {
     private var reconnectAttempts = 0
     private let maxReconnectAttempts = 5
     private var reconnectTask: Task<Void, Never>?
+    private var sessionNamed = false  // true after first turn completes and session is named
 
     // MARK: - Init
 
@@ -125,6 +126,7 @@ final class AssistantSession: ObservableObject {
         awaitingNewAITurn = false
         userTurnActive = false
         lastError = nil
+        sessionNamed = false
         sessionStartTime = Date()
         state = .connecting
         print("🟡 [ClawVoice] Connecting to Gemini...")
@@ -227,7 +229,6 @@ extension AssistantSession: GeminiLiveServiceDelegate {
 
     nonisolated func geminiDidReceiveUserText(_ text: String) {
         Task { @MainActor in
-            let isFirstTurn = !self.userTurnActive && self.userTranscript.isEmpty && self.aiTranscript.isEmpty
             if !self.userTurnActive {
                 // New user turn: clear previous user text and start fresh
                 self.userTranscript = ""
@@ -236,13 +237,6 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 self.awaitingNewAITurn = true  // next AI response should clear AI transcript
             }
             self.appendBuffered(text, to: \.userBuffer, publish: \.userTranscript)
-            // Auto-name session from first user message
-            if isFirstTurn {
-                SessionStore.shared.nameSession(
-                    id: OpenClawBridge.shared.currentSessionId,
-                    from: self.userBuffer
-                )
-            }
         }
     }
 
@@ -304,6 +298,14 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             print("✅ [ClawVoice] Turn complete, interrupted=\(interrupted)")
             if self.state == .speaking || self.state == .thinking {
                 self.state = .listening
+            }
+            // Name session after first complete user turn
+            if !self.sessionNamed && !self.userTranscript.isEmpty {
+                SessionStore.shared.nameSession(
+                    id: OpenClawBridge.shared.currentSessionId,
+                    from: self.userTranscript
+                )
+                self.sessionNamed = true
             }
             self.userTurnActive = false  // ready for next user input
         }
