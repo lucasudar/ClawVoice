@@ -179,6 +179,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
     nonisolated func geminiDidConnect() {
         Task { @MainActor in
             self.reconnectAttempts = 0  // reset on successful connect
+            self.lastError = nil        // dismiss error dialog on successful reconnect
             self.state = .listening
             do {
                 try self.audio.startCapture { [weak self] chunk in
