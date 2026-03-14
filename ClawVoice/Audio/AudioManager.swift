@@ -56,6 +56,8 @@ final class AudioManager {
 
     func startCapture(onChunk: @escaping AudioChunkHandler) throws {
         guard !isCapturing else { return }
+        // Defensive cleanup: remove any stale tap (e.g. if previous startCapture threw after tap install)
+        audioEngine.inputNode.removeTap(onBus: 0)
         isUserPaused = false  // always start fresh — stale pause flag causes silent audio drop after reconnect
         chunkHandler = onChunk
         accumulated  = Data()
@@ -82,7 +84,10 @@ final class AudioManager {
                                          sampleRate: outputSampleRate,
                                          channels: channels,
                                          interleaved: false)!
-        audioEngine.attach(playerNode)
+        // Attach only if not already attached (re-attach after detach in stopCapture)
+        if audioEngine.attachedNodes.contains(playerNode) == false {
+            audioEngine.attach(playerNode)
+        }
         audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: playerFormat)
 
         // Tap in native hardware format (Float32), then convert manually
