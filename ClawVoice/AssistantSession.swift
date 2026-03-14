@@ -24,7 +24,7 @@ final class AssistantSession: ObservableObject {
             case .connecting:   return "Connecting…"
             case .listening:    return "Listening…"
             case .paused:       return "Paused · tap to resume"
-            case .thinking:     return "Working…"
+            case .thinking:     return "Processing…"
             case .speaking:     return "Speaking…"
             case .error(let e): return e
             }
