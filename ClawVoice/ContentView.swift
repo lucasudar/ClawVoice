@@ -4,6 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var session: AssistantSession
     @EnvironmentObject var settings: AppSettings
     @State private var showSettings = false
+    @State private var showDrawer = false
     @State private var rippleScale: CGFloat = 1.0
     @State private var now: Date = Date()
     private let clockTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
@@ -128,9 +129,15 @@ struct ContentView: View {
                 }
             }
 
-            // Settings gear
+            // Top buttons: hamburger (left) + gear (right)
             VStack {
                 HStack {
+                    Button { withAnimation { showDrawer = true } } label: {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.35))
+                            .padding(20)
+                    }
                     Spacer()
                     Button { showSettings = true } label: {
                         Image(systemName: "gearshape.fill")
@@ -141,6 +148,10 @@ struct ContentView: View {
                 }
                 Spacer()
             }
+
+            // Sessions drawer overlay
+            SessionsDrawer(isOpen: $showDrawer)
+                .environmentObject(session)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView().environmentObject(settings)

@@ -27,6 +27,11 @@ final class OpenClawBridge {
         currentSessionId = UUID().uuidString  // new UUID = new OpenClaw session
     }
 
+    /// Restore a previous session by ID — OpenClaw will pick up its context server-side
+    func restoreSession(id: String) {
+        currentSessionId = id
+    }
+
     // MARK: - Execute task
 
     /// Sends a task to OpenClaw with full conversation history and returns the response.
