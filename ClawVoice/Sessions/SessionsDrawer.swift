@@ -127,8 +127,7 @@ struct SessionsDrawer: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             if session.state.isActive { session.stop() }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                OpenClawBridge.shared.restoreSession(id: record.id)
-                session.start()
+                session.startResume(sessionId: record.id)
             }
         }
     }

@@ -136,6 +136,31 @@ final class AssistantSession: ObservableObject {
         gemini.connect()
     }
 
+    /// Resume a previous session by ID — preserves OpenClaw context server-side
+    func startResume(sessionId: String) {
+        guard state == .idle || {
+            if case .error = state { return true } else { return false }
+        }() else { return }
+
+        reconnectAttempts = 0
+        reconnectTask?.cancel()
+        userTranscript = ""
+        aiTranscript = ""
+        userBuffer = ""
+        aiBuffer = ""
+        transcriptFlushTask?.cancel()
+        awaitingNewAITurn = false
+        userTurnActive = false
+        lastError = nil
+        sessionNamed = true  // don't overwrite existing session name
+        sessionStartTime = Date()
+        state = .connecting
+        print("🟡 [ClawVoice] Resuming session \(sessionId.prefix(8))...")
+        OpenClawBridge.shared.restoreSession(id: sessionId)  // keep existing ID — NO resetSession()
+        DebugLog.connection("RESUME", sessionId: sessionId)
+        gemini.connect()
+    }
+
     func stop() {
         reconnectTask?.cancel()
         reconnectAttempts = 0
