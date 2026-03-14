@@ -10,7 +10,8 @@ final class OpenClawBridge {
 
     // Stable session ID — same value = same OpenClaw session (derived via `user` field)
     // OpenClaw maintains conversation history server-side, so we only send current message
-    private var sessionId: String = UUID().uuidString
+    private(set) var currentSessionId: String = UUID().uuidString
+    private var sessionId: String { currentSessionId }
 
     private var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
@@ -23,7 +24,7 @@ final class OpenClawBridge {
 
     /// Call when starting a new Gemini session — clears conversation history
     func resetSession() {
-        sessionId = UUID().uuidString  // new UUID = new OpenClaw session
+        currentSessionId = UUID().uuidString  // new UUID = new OpenClaw session
     }
 
     // MARK: - Execute task

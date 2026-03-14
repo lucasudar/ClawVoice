@@ -127,12 +127,14 @@ final class AssistantSession: ObservableObject {
         state = .connecting
         print("🟡 [ClawVoice] Connecting to Gemini...")
         OpenClawBridge.shared.resetSession()  // fresh context for new session
+        SessionStore.shared.beginSession(id: OpenClawBridge.shared.currentSessionId)
         gemini.connect()
     }
 
     func stop() {
         reconnectTask?.cancel()
         reconnectAttempts = 0
+        SessionStore.shared.endSession(id: OpenClawBridge.shared.currentSessionId)
         gemini.disconnect()
         audio.stopCapture()
         sessionStartTime = nil
@@ -215,6 +217,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
 
     nonisolated func geminiDidReceiveUserText(_ text: String) {
         Task { @MainActor in
+            let isFirstTurn = !self.userTurnActive && self.userTranscript.isEmpty && self.aiTranscript.isEmpty
             if !self.userTurnActive {
                 // New user turn: clear previous user text and start fresh
                 self.userTranscript = ""
@@ -223,6 +226,13 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 self.awaitingNewAITurn = true  // next AI response should clear AI transcript
             }
             self.appendBuffered(text, to: \.userBuffer, publish: \.userTranscript)
+            // Auto-name session from first user message
+            if isFirstTurn {
+                SessionStore.shared.nameSession(
+                    id: OpenClawBridge.shared.currentSessionId,
+                    from: self.userBuffer
+                )
+            }
         }
     }
 
