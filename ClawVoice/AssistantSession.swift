@@ -70,6 +70,7 @@ final class AssistantSession: ObservableObject {
     init() {
         gemini.delegate = self
         observeSiriShortcut()
+        DebugLog.setup()
     }
 
     // MARK: - Public API
@@ -128,12 +129,15 @@ final class AssistantSession: ObservableObject {
         print("🟡 [ClawVoice] Connecting to Gemini...")
         OpenClawBridge.shared.resetSession()  // fresh context for new session
         SessionStore.shared.beginSession(id: OpenClawBridge.shared.currentSessionId)
+        DebugLog.connection("START", sessionId: OpenClawBridge.shared.currentSessionId)
         gemini.connect()
     }
 
     func stop() {
         reconnectTask?.cancel()
         reconnectAttempts = 0
+        let age = sessionStartTime.map { Date().timeIntervalSince($0) }
+        DebugLog.connection("STOP", sessionId: OpenClawBridge.shared.currentSessionId, sessionAge: age)
         SessionStore.shared.endSession(id: OpenClawBridge.shared.currentSessionId)
         gemini.disconnect()
         audio.stopCapture()
@@ -145,6 +149,7 @@ final class AssistantSession: ObservableObject {
         guard reconnectAttempts < maxReconnectAttempts else {
             print("❌ [ClawVoice] Max reconnect attempts reached, giving up")
             let msg = "Connection to Gemini lost. Tap to reconnect."
+            DebugLog.error("MAX_RECONNECT_REACHED | \(msg)")
             lastError = msg
             state = .error(msg)
             return
@@ -152,6 +157,9 @@ final class AssistantSession: ObservableObject {
         reconnectAttempts += 1
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s
         let delay = Double(1 << (reconnectAttempts - 1))
+        let age = sessionStartTime.map { Date().timeIntervalSince($0) }
+        DebugLog.connection("RECONNECT attempt=\(reconnectAttempts)/\(maxReconnectAttempts) delay=\(Int(delay))s",
+                            sessionId: OpenClawBridge.shared.currentSessionId, sessionAge: age)
         print("🔁 [ClawVoice] Reconnecting in \(Int(delay))s (attempt \(reconnectAttempts)/\(maxReconnectAttempts))...")
         state = .connecting
 
@@ -185,6 +193,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
         Task { @MainActor in
             self.reconnectAttempts = 0  // reset on successful connect
             self.lastError = nil        // dismiss error dialog on successful reconnect
+            DebugLog.connection("CONNECTED", sessionId: OpenClawBridge.shared.currentSessionId)
             self.state = .listening
             do {
                 try self.audio.startCapture { [weak self] chunk in
@@ -300,9 +309,13 @@ extension AssistantSession: GeminiLiveServiceDelegate {
     nonisolated func geminiDidDisconnect(error: Error?) {
         Task { @MainActor in
             self.audio.stopCapture()
+            let age = self.sessionStartTime.map { Date().timeIntervalSince($0) }
             if let error {
                 let msg = error.localizedDescription
                 print("❌ [ClawVoice] Gemini disconnected with error: \(msg)")
+                DebugLog.connection("DISCONNECT error=\(msg)",
+                                    sessionId: OpenClawBridge.shared.currentSessionId,
+                                    sessionAge: age)
                 // Auto-reconnect if user was active (not manually stopped)
                 if self.state != .idle {
                     self.scheduleReconnect()
@@ -312,6 +325,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 }
             } else {
                 print("ℹ️ [ClawVoice] Gemini disconnected cleanly")
+                DebugLog.connection("DISCONNECT clean", sessionAge: age)
                 self.state = .idle
             }
         }
