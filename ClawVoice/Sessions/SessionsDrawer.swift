@@ -140,6 +140,11 @@ struct SessionRow: View {
     let isCurrent: Bool
     let onTap: () -> Void
 
+    private func sessionSubtitle(_ r: SessionRecord) -> String {
+        if isCurrent { return r.displayTime + " · active" }
+        return r.displayTime + " · " + r.displayDuration
+    }
+
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
@@ -154,7 +159,7 @@ struct SessionRow: View {
                         .foregroundColor(isCurrent ? .white : .white.opacity(0.75))
                         .lineLimit(1)
 
-                    Text(record.displayTime + (record.endedAt != nil ? " · \(record.displayDuration)" : " · active"))
+                    Text(sessionSubtitle(record))
                         .font(.system(size: 12, design: .rounded))
                         .foregroundColor(.white.opacity(0.3))
                 }
