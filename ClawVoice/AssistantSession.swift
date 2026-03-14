@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import AudioToolbox
 
 /// Central coordinator: owns Gemini + Audio + ToolCallRouter.
 @MainActor
@@ -289,9 +290,11 @@ extension AssistantSession: GeminiLiveServiceDelegate {
         Task { @MainActor in
             self.state = .thinking
             self.currentTask = args["task"] ?? name
+            AudioServicesPlaySystemSound(1104)  // "tock" — tool start
             let result = await self.router.handle(id: id, name: name, args: args)
             self.currentTask = nil
             self.gemini.sendToolResponse(id: id, output: result)
+            AudioServicesPlaySystemSound(1057)  // "tink" — tool done
             self.state = .listening
         }
     }
