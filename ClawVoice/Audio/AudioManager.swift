@@ -263,6 +263,13 @@ final class AudioManager {
         playerNode.play()  // continue playing buffered AI audio
     }
 
+    /// Gemini-initiated interruption: DROP all buffered audio immediately.
+    /// Different from pauseCapture() — this is not a resume-able pause.
+    func clearPlayback() {
+        playerNode.stop()   // cancels all scheduled buffers
+        playerNode.play()   // re-arm for next AI response
+    }
+
 
 
     /// Schedule a chunk of PCM Int16 24kHz audio for gapless playback.

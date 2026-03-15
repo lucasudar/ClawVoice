@@ -375,6 +375,10 @@ extension AssistantSession: GeminiLiveServiceDelegate {
     nonisolated func geminiDidTurnComplete(interrupted: Bool) {
         Task { @MainActor in
             print("✅ [ClawVoice] Turn complete, interrupted=\(interrupted)")
+            if interrupted {
+                // Drop all buffered AI audio — user spoke, Gemini is starting a new response
+                self.audio.clearPlayback()
+            }
             if self.state == .speaking || self.state == .thinking {
                 self.state = .listening
             }
