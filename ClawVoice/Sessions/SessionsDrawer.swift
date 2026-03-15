@@ -168,8 +168,6 @@ struct SessionRow: View {
     let onTap: () -> Void
     let onDelete: () -> Void
 
-    @State private var showDeleteConfirm = false
-
     private func sessionSubtitle(_ r: SessionRecord) -> String {
         if isCurrent { return r.displayTime + " · active" }
         return r.displayTime + " · " + r.displayDuration
@@ -200,17 +198,13 @@ struct SessionRow: View {
             .background(isCurrent ? Color.white.opacity(0.06) : Color.clear)
         }
         .buttonStyle(.plain)
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
-                showDeleteConfirm = true
+                onDelete()
             } label: {
                 Label("Delete", systemImage: "trash")
             }
             .tint(.red)
-        }
-        .confirmationDialog("Delete this conversation?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { onDelete() }
-            Button("Cancel", role: .cancel) {}
         }
     }
 }
