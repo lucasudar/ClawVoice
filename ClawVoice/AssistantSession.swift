@@ -301,6 +301,10 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                     // Echo suppression (speaker only — headphones use AEC):
                     // 1. While AI is speaking (isModelSpeaking)
                     // 2. Brief window after tool result sent (echo drain before AI starts responding)
+                    // Block audio to Gemini during tool execution — prevents casual speech
+                    // from interrupting the tool and causing duplicate/loop tool calls.
+                    // User can still tap orb to pause if they want to cancel.
+                    if self.state == .thinking { return }
                     if !self.audio.headphonesConnected {
                         if self.gemini.isModelSpeaking { return }
                         if Date() < self.postToolSuppressUntil { return }
