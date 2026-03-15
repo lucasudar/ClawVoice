@@ -69,6 +69,7 @@ final class AssistantSession: ObservableObject {
     private var turnCount = 0           // counts completed turns for deferred naming
     private var lastUserTurn = ""       // transcript of the most recent completed user turn
     private var postToolSuppressUntil: Date = .distantPast  // suppress mic briefly after tool result sent
+    var pendingToolResponseBlocked = false  // set on interrupted=true, prevents stale tool response → 1008
 
     // MARK: - Init
 
@@ -365,6 +366,13 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             AudioServicesPlayAlertSound(1105)   // "key_press_modifier" — tool start (louder, speaker)
             let result = await self.router.handle(id: id, name: name, args: args)
             self.currentTask = nil
+            // Don't send tool response if the turn was interrupted — Gemini doesn't expect it
+            // and will close the connection with code 1008 (unexpected message)
+            guard !self.pendingToolResponseBlocked else {
+                print("⚠️ [ClawVoice] Tool response suppressed (turn was interrupted)")
+                self.pendingToolResponseBlocked = false
+                return
+            }
             self.gemini.sendToolResponse(id: id, output: result)
             // Suppress mic for 800ms after tool result — gives Gemini time to start speaking
             // without echo from previous AI speech interrupting the new response
@@ -380,6 +388,9 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             if interrupted {
                 // Drop all buffered AI audio — user spoke, Gemini is starting a new response
                 self.audio.clearPlayback()
+                // Block any pending tool response — Gemini no longer expects it after interrupt
+                // Sending it would cause code=1008 "Operation not supported" disconnect
+                self.pendingToolResponseBlocked = true
             }
             if self.state == .speaking || self.state == .thinking {
                 self.state = .listening
