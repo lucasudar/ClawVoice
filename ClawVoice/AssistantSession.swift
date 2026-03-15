@@ -74,6 +74,7 @@ final class AssistantSession: ObservableObject {
     init() {
         gemini.delegate = self
         observeSiriShortcut()
+        observeAppLifecycle()
         DebugLog.setup()
     }
 
@@ -218,6 +219,28 @@ final class AssistantSession: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in self?.start() }
+        }
+    }
+
+    func observeAppLifecycle() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                // If connection dropped while in background — reconnect on resume
+                if self.state == .connecting || self.state == .listening ||
+                   self.state == .speaking || self.state == .thinking ||
+                   self.state == .paused {
+                    if !self.gemini.isConnected {
+                        print("📱 [ClawVoice] Foregrounded with dead connection — reconnecting")
+                        self.reconnectAttempts = 0
+                        self.scheduleReconnect()
+                    }
+                }
+            }
         }
     }
 }
