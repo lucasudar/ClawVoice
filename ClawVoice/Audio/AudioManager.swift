@@ -74,30 +74,39 @@ final class AudioManager {
         }
     }
 
-    private func installTap() {
-        let inputNode       = audioEngine.inputNode
-        let nativeFormat    = inputNode.outputFormat(forBus: 0)
-        // Guard against invalid format (can happen briefly during BT route change)
-        guard nativeFormat.sampleRate > 0 else {
-            print("⚠️ [Audio] Invalid input format (sampleRate=0), skipping tap install")
-            return
-        }
-        let resampleFormat  = AVAudioFormat(commonFormat: .pcmFormatFloat32,
-                                             sampleRate: inputSampleRate,
-                                             channels: channels,
-                                             interleaved: false)!
-        let needsResample   = nativeFormat.sampleRate != inputSampleRate || nativeFormat.channelCount != channels
-        let converter       = needsResample ? AVAudioConverter(from: nativeFormat, to: resampleFormat) : nil
+    // Cached converter — rebuilt when hardware format changes (e.g. BT route switch)
+    private var tapConverter: AVAudioConverter?
+    private var tapConverterSourceRate: Double = 0
 
-        inputNode.installTap(onBus: 0, bufferSize: 4096, format: nativeFormat) { [weak self] buffer, _ in
+    private func installTap() {
+        let inputNode = audioEngine.inputNode
+        // Pass nil format — lets AVAudioEngine use the current hardware format automatically.
+        // This avoids the format mismatch crash when BT HFP switches sample rate mid-session.
+        inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
             guard let self, !self.isMuted, !self.isUserPaused else { return }
+
+            let bufferRate = buffer.format.sampleRate
+            let resampleFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                               sampleRate: self.inputSampleRate,
+                                               channels: self.channels,
+                                               interleaved: false)!
+
             let pcmData: Data
-            if let converter {
-                guard let resampled = self.convert(buffer, using: converter, to: resampleFormat) else { return }
-                pcmData = self.float32ToInt16Data(resampled)
-            } else {
+            if bufferRate == self.inputSampleRate && buffer.format.channelCount == self.channels {
+                // Native format matches target — no conversion needed
                 pcmData = self.float32ToInt16Data(buffer)
+            } else {
+                // Rebuild converter if hardware format changed
+                if self.tapConverter == nil || self.tapConverterSourceRate != bufferRate {
+                    self.tapConverter = AVAudioConverter(from: buffer.format, to: resampleFormat)
+                    self.tapConverterSourceRate = bufferRate
+                    print("🔄 [Audio] Tap converter rebuilt: \(Int(bufferRate))Hz → \(Int(self.inputSampleRate))Hz")
+                }
+                guard let converter = self.tapConverter,
+                      let resampled = self.convert(buffer, using: converter, to: resampleFormat) else { return }
+                pcmData = self.float32ToInt16Data(resampled)
             }
+
             self.sendQueue.async {
                 self.accumulated.append(pcmData)
                 if self.accumulated.count >= self.minSendBytes {
