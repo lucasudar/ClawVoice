@@ -257,10 +257,12 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             self.reconnectAttempts = 0  // reset on successful connect
             self.lastError = nil        // dismiss error dialog on successful reconnect
             DebugLog.connection("CONNECTED", sessionId: OpenClawBridge.shared.currentSessionId)
-            // Don't override .paused — user paused intentionally, stay paused after reconnect
-            if self.state != .paused {
-                self.state = .listening
+            // Don't reconnect audio while paused — user paused intentionally
+            guard self.state != .paused else {
+                print("⏸ [ClawVoice] Connected but state=paused — not starting audio capture")
+                return
             }
+            self.state = .listening
             do {
                 try self.audio.startCapture { [weak self] chunk in
                     guard let self else { return }
@@ -394,8 +396,9 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 DebugLog.connection("DISCONNECT error=\(msg)",
                                     sessionId: OpenClawBridge.shared.currentSessionId,
                                     sessionAge: age)
-                // Auto-reconnect if user was active (not manually stopped)
-                if self.state != .idle {
+                // Auto-reconnect only if actively listening/speaking/thinking (not paused/idle)
+                if self.state == .listening || self.state == .speaking ||
+                   self.state == .thinking || self.state == .connecting {
                     self.scheduleReconnect()
                 } else {
                     self.lastError = msg
@@ -405,8 +408,9 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 print("ℹ️ [ClawVoice] Gemini disconnected cleanly")
                 DebugLog.connection("DISCONNECT clean", sessionAge: age)
                 // Clean disconnect = Gemini session timeout (~10 min limit)
-                // Auto-reconnect if user was still active, otherwise idle
-                if self.state != .idle {
+                // Auto-reconnect only if actively in a session (not paused/idle)
+                if self.state == .listening || self.state == .speaking ||
+                   self.state == .thinking || self.state == .connecting {
                     self.scheduleReconnect()
                 } else {
                     self.state = .idle
