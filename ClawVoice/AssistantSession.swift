@@ -312,11 +312,11 @@ extension AssistantSession: GeminiLiveServiceDelegate {
         Task { @MainActor in
             self.state = .thinking
             self.currentTask = args["task"] ?? name
-            AudioServicesPlaySystemSound(1104)  // "tock" — tool start
+            AudioServicesPlayAlertSound(1105)   // "key_press_modifier" — tool start (louder, speaker)
             let result = await self.router.handle(id: id, name: name, args: args)
             self.currentTask = nil
             self.gemini.sendToolResponse(id: id, output: result)
-            AudioServicesPlaySystemSound(1057)  // "tink" — tool done
+            AudioServicesPlayAlertSound(1054)   // "tweet" — tool done (distinct, speaker)
             self.state = .listening
         }
     }
