@@ -31,7 +31,7 @@ final class AudioManager {
     private let sendQueue      = DispatchQueue(label: "clawvoice.audio.send", qos: .userInitiated)
     private var accumulated    = Data()
     private var flushTimer:    DispatchSourceTimer?  // periodic flush so silence reaches Gemini VAD
-    private let tapQueue       = DispatchQueue(label: "clawvoice.audio.tap", qos: .userInitiated)
+
 
     // MARK: - Public API
 
@@ -54,18 +54,19 @@ final class AudioManager {
 
     /// Called by AVAudioEngine when BT or other route changes force engine reconfiguration.
     /// We must reinstall the tap with the new hardware format and restart the engine.
+    /// Must run on main thread — AVAudioEngine is not thread-safe.
     @objc private func handleEngineConfigurationChange(_ notification: Notification) {
         guard isCapturing else { return }
         print("⚠️ [Audio] Engine reconfigured — reinstalling tap")
-        tapQueue.async { [weak self] in
-            guard let self else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isCapturing else { return }
             self.audioEngine.inputNode.removeTap(onBus: 0)
             self.installTap()
             if !self.audioEngine.isRunning {
                 do {
                     self.audioEngine.prepare()
                     try self.audioEngine.start()
-                    if !self.playerNode.isPlaying { self.playerNode.play() }
+                    if !self.isUserPaused && !self.playerNode.isPlaying { self.playerNode.play() }
                 } catch {
                     print("❌ [Audio] Engine restart after reconfigure failed: \(error)")
                 }
@@ -150,11 +151,21 @@ final class AudioManager {
         }
         audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: playerFormat)
 
-        // Install tap using shared helper (handles BT format + resampling)
+        // Install tap using shared helper (handles BT format + resampling).
+        // With BT HFP, format may not be ready yet (sampleRate=0) — installTap guards this.
+        // AVAudioEngineConfigurationChange fires when BT SCO connects and we reinstall then.
         installTap()
 
         audioEngine.prepare()
         try audioEngine.start()
+
+        // BT HFP deferred tap retry: SCO channel may not be ready at connect time.
+        // After 300ms, reinstall tap with the now-settled BT format (safe no-op if already correct).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, self.isCapturing else { return }
+            self.audioEngine.inputNode.removeTap(onBus: 0)
+            self.installTap()
+        }
         playerNode.play()
         isCapturing = true
         startFlushTimer()
