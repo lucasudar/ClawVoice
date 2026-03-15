@@ -182,6 +182,19 @@ final class AssistantSession: ObservableObject {
         state = .idle
     }
 
+    private func withTimeoutOrNil<T>(seconds: Double, task: Task<T, Never>) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await task.value }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next()!!
+            group.cancelAll()
+            return first
+        }
+    }
+
     private func scheduleReconnect() {
         // Cancel any in-flight reconnect task before scheduling a new one (prevents race)
         reconnectTask?.cancel()
@@ -265,6 +278,7 @@ extension AssistantSession: GeminiLiveServiceDelegate {
                 }
             }
             self.lastError = nil        // dismiss error dialog on successful reconnect
+            self.pendingToolResponseBlocked = false  // reset stale flag from previous session
             DebugLog.connection("CONNECTED", sessionId: OpenClawBridge.shared.currentSessionId)
             // Don't reconnect audio while paused — user paused intentionally
             guard self.state != .paused else {
@@ -364,7 +378,16 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             self.state = .thinking
             self.currentTask = args["task"] ?? name
             AudioServicesPlayAlertSound(1105)   // "key_press_modifier" — tool start (louder, speaker)
-            let result = await self.router.handle(id: id, name: name, args: args)
+            // Gemini Live expects tool response within ~30s — add timeout
+            let result: String
+            let handleTask = Task { await self.router.handle(id: id, name: name, args: args) }
+            if let r = await withTimeoutOrNil(seconds: 25, task: handleTask) {
+                result = r
+            } else {
+                handleTask.cancel()
+                result = "Request timed out after 25 seconds."
+                print("⏱ [ClawVoice] Tool response timed out")
+            }
             self.currentTask = nil
             // Don't send tool response if the turn was interrupted — Gemini doesn't expect it
             // and will close the connection with code 1008 (unexpected message)
