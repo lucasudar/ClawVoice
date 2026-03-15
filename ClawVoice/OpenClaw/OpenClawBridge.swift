@@ -92,37 +92,36 @@ final class OpenClawBridge {
     // MARK: - Topic Name Generation
 
     /// Generate a short 2-5 word topic name from user transcript.
-    /// Uses a throwaway session UUID so it doesn't pollute the main conversation context.
+    /// Uses Gemini REST API directly (stateless, no session history pollution).
     func generateTopicName(from transcript: String) async -> String? {
-        let settings = AppSettings.shared
-        guard !settings.openClawBaseURL.isEmpty, !settings.openClawToken.isEmpty else { return nil }
-        guard let url = URL(string: "\(settings.openClawBaseURL)/v1/chat/completions") else { return nil }
+        let apiKey = AppSettings.shared.geminiApiKey
+        guard !apiKey.isEmpty else { return nil }
+
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\(apiKey)"
+        guard let url = URL(string: urlString) else { return nil }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(settings.openClawToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 8
 
-        let prompt = "Give a very short title (2-5 words, same language as text) for a voice conversation that started with: \"\(transcript.prefix(200))\". Reply with ONLY the title, no punctuation."
+        let prompt = "Give a very short title (2-5 words, same language as input) for a voice conversation that started with this text: \"\(transcript.prefix(300))\". Reply with ONLY the title, no quotes, no punctuation at the end."
         let body: [String: Any] = [
-            "model":    "gpt-4o",
-            "messages": [["role": "user", "content": prompt]],
-            "user":     UUID().uuidString  // throwaway — no context pollution
+            "contents": [["parts": [["text": prompt]]]]
         ]
         guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else { return nil }
         request.httpBody = httpBody
 
         guard let (data, _) = try? await urlSession.data(for: request) else { return nil }
 
-        struct Resp: Decodable {
-            struct Choice: Decodable { struct Msg: Decodable { let content: String }; let message: Msg }
-            let choices: [Choice]
-        }
-        guard let decoded = try? JSONDecoder().decode(Resp.self, from: data),
-              let name = decoded.choices.first?.message.content else { return nil }
+        // Gemini REST response: {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let candidates = json["candidates"] as? [[String: Any]],
+              let content = candidates.first?["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let text = parts.first?["text"] as? String else { return nil }
 
-        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
         return cleaned.isEmpty ? nil : cleaned
     }
