@@ -83,10 +83,7 @@ struct SessionsDrawer: View {
                                             if isLast {
                                                 close()
                                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                                    session.stop()
-                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                        session.start()
-                                                    }
+                                                    session.stop()  // → .idle → "Tap to talk"
                                                 }
                                             }
                                         }
@@ -126,12 +123,8 @@ struct SessionsDrawer: View {
                                 Button("Delete All", role: .destructive) {
                                     store.clearAll()
                                     close()
-                                    // Stop current session and start fresh
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        session.stop()
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            session.start()
-                                        }
+                                        session.stop()  // → .idle → "Tap to talk"
                                     }
                                 }
                                 Button("Cancel", role: .cancel) {}
