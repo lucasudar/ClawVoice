@@ -231,9 +231,10 @@ final class AssistantSession: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 // If connection dropped while in background — reconnect on resume
+                // Reconnect on foreground only if actively in a non-paused state
+                // Never auto-reconnect from .paused — user must resume manually
                 if self.state == .connecting || self.state == .listening ||
-                   self.state == .speaking || self.state == .thinking ||
-                   self.state == .paused {
+                   self.state == .speaking || self.state == .thinking {
                     if !self.gemini.isConnected {
                         print("📱 [ClawVoice] Foregrounded with dead connection — reconnecting")
                         self.reconnectAttempts = 0
@@ -254,7 +255,10 @@ extension AssistantSession: GeminiLiveServiceDelegate {
             self.reconnectAttempts = 0  // reset on successful connect
             self.lastError = nil        // dismiss error dialog on successful reconnect
             DebugLog.connection("CONNECTED", sessionId: OpenClawBridge.shared.currentSessionId)
-            self.state = .listening
+            // Don't override .paused — user paused intentionally, stay paused after reconnect
+            if self.state != .paused {
+                self.state = .listening
+            }
             do {
                 try self.audio.startCapture { [weak self] chunk in
                     guard let self else { return }
