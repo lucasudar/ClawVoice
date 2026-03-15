@@ -110,10 +110,10 @@ struct ContentView: View {
                             .padding(.vertical, 4)
                         }
                         .frame(maxHeight: 180)
-                        .onChange(of: session.aiTranscript) { _ in
+                        .onChange(of: session.aiTranscript) {
                             withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                         }
-                        .onChange(of: session.userTranscript) { _ in
+                        .onChange(of: session.userTranscript) {
                             withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                         }
                     }
