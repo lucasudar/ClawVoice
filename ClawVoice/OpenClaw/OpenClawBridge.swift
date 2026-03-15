@@ -95,35 +95,57 @@ final class OpenClawBridge {
     /// Uses Gemini REST API directly (stateless, no session history pollution).
     func generateTopicName(from transcript: String) async -> String? {
         let apiKey = AppSettings.shared.geminiApiKey
-        guard !apiKey.isEmpty else { return nil }
+        guard !apiKey.isEmpty else {
+            print("⚠️ [TopicName] No Gemini API key configured")
+            return nil
+        }
 
-        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\(apiKey)"
-        guard let url = URL(string: urlString) else { return nil }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 8
-
+        // Try gemini-2.0-flash first, fall back to gemini-1.5-flash-8b (lighter, higher quota)
+        let models = ["gemini-2.0-flash", "gemini-1.5-flash-8b"]
         let prompt = "Give a very short title (2-5 words, same language as input) for a voice conversation that started with this text: \"\(transcript.prefix(300))\". Reply with ONLY the title, no quotes, no punctuation at the end."
-        let body: [String: Any] = [
-            "contents": [["parts": [["text": prompt]]]]
-        ]
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else { return nil }
-        request.httpBody = httpBody
 
-        guard let (data, _) = try? await urlSession.data(for: request) else { return nil }
+        for model in models {
+            let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
+            guard let url = URL(string: urlString) else { continue }
 
-        // Gemini REST response: {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let candidates = json["candidates"] as? [[String: Any]],
-              let content = candidates.first?["content"] as? [String: Any],
-              let parts = content["parts"] as? [[String: Any]],
-              let text = parts.first?["text"] as? String else { return nil }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.timeoutInterval = 15
 
-        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
-        return cleaned.isEmpty ? nil : cleaned
+            let body: [String: Any] = ["contents": [["parts": [["text": prompt]]]]]
+            guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else { continue }
+            request.httpBody = httpBody
+
+            guard let (data, resp) = try? await urlSession.data(for: request) else {
+                print("⚠️ [TopicName] Network error for \(model)")
+                continue
+            }
+
+            if let http = resp as? HTTPURLResponse, http.statusCode != 200 {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                print("⚠️ [TopicName] \(model) → HTTP \(http.statusCode): \(body.prefix(200))")
+                continue
+            }
+
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let candidates = json["candidates"] as? [[String: Any]],
+                  let content = candidates.first?["content"] as? [String: Any],
+                  let parts = content["parts"] as? [[String: Any]],
+                  let text = parts.first?["text"] as? String else {
+                print("⚠️ [TopicName] \(model) → unexpected response: \(String(data: data, encoding: .utf8)?.prefix(200) ?? "nil")")
+                continue
+            }
+
+            let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            if !cleaned.isEmpty {
+                print("✅ [TopicName] \(model) → \"\(cleaned)\"")
+                return cleaned
+            }
+        }
+        print("⚠️ [TopicName] All models failed, keeping placeholder")
+        return nil
     }
 
     // MARK: - Errors
