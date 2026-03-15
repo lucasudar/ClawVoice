@@ -193,12 +193,24 @@ final class AssistantSession: ObservableObject {
         reconnectTask?.cancel()
         reconnectTask = nil
 
-        guard reconnectAttempts < maxReconnectAttempts else {
+        // While a tool is in-flight, don't exhaust reconnect attempts — the tool needs the connection
+        guard reconnectAttempts < maxReconnectAttempts || currentTask != nil else {
             print("❌ [ClawVoice] Max reconnect attempts reached, giving up")
             let msg = "Connection to Gemini lost. Tap to reconnect."
             DebugLog.error("MAX_RECONNECT_REACHED | \(msg)")
             lastError = msg
             state = .error(msg)
+            return
+        }
+        // Don't increment counter while tool is running — save attempts for after tool completes
+        guard currentTask == nil else {
+            print("🔁 [ClawVoice] Tool in-flight — reconnecting without incrementing counter")
+            state = .connecting
+            reconnectTask = Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)  // fixed 2s delay during tool
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self.gemini.connect() }
+            }
             return
         }
         reconnectAttempts += 1
