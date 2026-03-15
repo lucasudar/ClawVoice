@@ -76,33 +76,45 @@ struct ContentView: View {
                     }
                 }
 
-                // Transcript
+                // Transcript (scrollable, auto-scrolls to bottom)
                 let hasTranscript = !session.userTranscript.isEmpty || !session.aiTranscript.isEmpty
                 if hasTranscript {
-                    VStack(spacing: 6) {
-                        if !session.userTranscript.isEmpty {
-                            HStack(alignment: .top, spacing: 6) {
-                                Text("You:")
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.blue.opacity(0.8))
-                                Text(session.userTranscript)
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.6))
+                    ScrollViewReader { proxy in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                if !session.userTranscript.isEmpty {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("You:")
+                                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                            .foregroundColor(.blue.opacity(0.8))
+                                        Text(session.userTranscript)
+                                            .font(.system(size: 13, design: .rounded))
+                                            .foregroundColor(.white.opacity(0.6))
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                                if !session.aiTranscript.isEmpty {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("AI:")
+                                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                            .foregroundColor(.green.opacity(0.8))
+                                        Text(session.aiTranscript)
+                                            .font(.system(size: 13, design: .rounded))
+                                            .foregroundColor(.white.opacity(0.6))
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                                Color.clear.frame(height: 1).id("bottom")
                             }
-                            .multilineTextAlignment(.leading)
                             .padding(.horizontal, 32)
+                            .padding(.vertical, 4)
                         }
-                        if !session.aiTranscript.isEmpty {
-                            HStack(alignment: .top, spacing: 6) {
-                                Text("AI:")
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.green.opacity(0.8))
-                                Text(session.aiTranscript)
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.6))
-                            }
-                            .multilineTextAlignment(.leading)
-                            .padding(.horizontal, 32)
+                        .frame(maxHeight: 180)
+                        .onChange(of: session.aiTranscript) { _ in
+                            withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                        }
+                        .onChange(of: session.userTranscript) { _ in
+                            withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                         }
                     }
                 }
