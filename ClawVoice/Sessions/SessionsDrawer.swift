@@ -77,7 +77,19 @@ struct SessionsDrawer: View {
                                             record: record,
                                             isCurrent: record.id == currentSessionId,
                                             onTap: { resumeSession(record) },
-                                            onDelete: { store.deleteSession(id: record.id) }
+                                            onDelete: {
+                                            let isLast = store.sessions.count == 1
+                                            store.deleteSession(id: record.id)
+                                            if isLast {
+                                                close()
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                    session.stop()
+                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                        session.start()
+                                                    }
+                                                }
+                                            }
+                                        }
                                         )
                                         .listRowBackground(record.id == currentSessionId
                                             ? Color.white.opacity(0.06)
