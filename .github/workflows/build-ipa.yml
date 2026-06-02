@@ -28,11 +28,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Show versions
-        run: xcodebuild -version && swift --version
+        run: |
+          xcodebuild -version
+          swift --version
+          echo "--- installed iOS SDKs ---"
+          xcodebuild -showsdks | grep -i iphoneos || true
 
       - name: Build (unsigned archive)
         run: |
@@ -42,18 +48,6 @@ jobs:
             -scheme ClawVoice \
             -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/ClawVoice.xcarchive" \
-            archive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            | xcpretty || xcodebuild \
-            -project ClawVoice.xcodeproj \
-            -scheme ClawVoice \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/ClawVoice.xcarchive" \
             archive \
             CODE_SIGNING_ALLOWED=NO \
