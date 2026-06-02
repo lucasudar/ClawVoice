@@ -26,7 +26,7 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Select latest stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -78,7 +78,7 @@ jobs:
           echo "size=$(stat -f%z "$RUNNER_TEMP/ClawVoice.ipa")" >> "$GITHUB_OUTPUT"
 
       - name: Update nightly release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: nightly
           name: "ClawVoice nightly (main)"
