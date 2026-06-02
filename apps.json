@@ -27,7 +27,7 @@
           "date": "2026-06-02",
           "localizedDescription": "Latest build from the main branch: switched chatCompletions to the 'openclaw' model id, removed debug logging from topic name generation, reconnect/haptics fixes.",
           "downloadURL": "https://github.com/lucasudar/ClawVoice/releases/download/nightly/ClawVoice.ipa",
-          "size": 0,
+          "size": 510343,
           "minOSVersion": "17.0"
         }
       ],
