@@ -124,7 +124,35 @@ Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apike
 
 ---
 
-## Setup
+## Install (SideStore / AltStore)
+
+The easiest way to install ClawVoice without Xcode. Every push to `main` is auto-built into an unsigned IPA and published to a rolling `nightly` release, so the source below always serves the latest build.
+
+### Add the source
+
+1. Install [SideStore](https://sidestore.io) (or AltStore) and pair it with your Apple ID.
+2. In SideStore open **Sources → +** and paste:
+   ```
+   https://raw.githubusercontent.com/lucasudar/ClawVoice/main/apps.json
+   ```
+3. Open the **ClawVoice** source → tap the app → **GET / FREE** to install.
+
+SideStore re-signs the IPA with your Apple ID on install — no certificates or paid developer account required.
+
+### Updating
+
+- New versions appear automatically in the source after each `main` build.
+- Tap **Update** in SideStore to pull the latest build.
+
+> ⚠️ With a **free** Apple ID, sideloaded apps must be re-signed every **7 days**. Keep SideStore's background refresh / AltServer reachable so it renews automatically — otherwise the app stops launching until you refresh it. A paid Apple Developer account ($99/yr) extends this to 1 year.
+
+### Build it yourself
+
+If you'd rather build a fresh IPA from CI manually, go to the repo's **Actions → Build ClawVoice → Run workflow**. The artifact lands in the `nightly` release.
+
+---
+
+## Build from source (developers)
 
 ```bash
 git clone https://github.com/lucasudar/clawvoice-ios.git
