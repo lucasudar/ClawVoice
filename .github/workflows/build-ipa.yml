@@ -1,0 +1,132 @@
+name: Build ClawVoice (unsigned IPA → nightly release)
+
+# Builds an UNSIGNED .ipa from the latest main and (re)uploads it to the
+# "nightly" rolling release. SideStore re-signs the IPA with your Apple ID
+# on install, so no certificates/secrets are needed in CI.
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'apps.json'
+      - 'README.md'
+      - 'assets/**'
+      - '.github/**'
+  workflow_dispatch:        # manual "Run workflow" button
+
+permissions:
+  contents: write           # needed to create/update the release
+
+concurrency:
+  group: nightly-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Show versions
+        run: xcodebuild -version && swift --version
+
+      - name: Build (unsigned archive)
+        run: |
+          set -eo pipefail
+          xcodebuild \
+            -project ClawVoice.xcodeproj \
+            -scheme ClawVoice \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/ClawVoice.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | xcpretty || xcodebuild \
+            -project ClawVoice.xcodeproj \
+            -scheme ClawVoice \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/ClawVoice.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package unsigned IPA
+        run: |
+          set -eo pipefail
+          APP_PATH="$RUNNER_TEMP/ClawVoice.xcarchive/Products/Applications/ClawVoice.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "::error::ClawVoice.app not found in archive"; ls -R "$RUNNER_TEMP/ClawVoice.xcarchive/Products" || true; exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          ( cd "$RUNNER_TEMP" && zip -qry ClawVoice.ipa Payload )
+          ls -lh "$RUNNER_TEMP/ClawVoice.ipa"
+
+      - name: Read marketing version
+        id: ver
+        run: |
+          V=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+            "$RUNNER_TEMP/ClawVoice.xcarchive/Products/Applications/ClawVoice.app/Info.plist" 2>/dev/null || echo "1.0")
+          B=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" \
+            "$RUNNER_TEMP/ClawVoice.xcarchive/Products/Applications/ClawVoice.app/Info.plist" 2>/dev/null || echo "1")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "build=$B"   >> "$GITHUB_OUTPUT"
+          echo "size=$(stat -f%z "$RUNNER_TEMP/ClawVoice.ipa")" >> "$GITHUB_OUTPUT"
+
+      - name: Update nightly release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: "ClawVoice nightly (main)"
+          body: |
+            Rolling unsigned build from the latest `main`.
+            Version ${{ steps.ver.outputs.version }} (build ${{ steps.ver.outputs.build }})
+            Commit ${{ github.sha }}
+            Install via SideStore (it re-signs with your Apple ID).
+          prerelease: true
+          files: ${{ runner.temp }}/ClawVoice.ipa
+          fail_on_unmatched_files: true
+
+      - name: Sync apps.json (version + size + date)
+        run: |
+          set -eo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          BUILD="${{ steps.ver.outputs.build }}"
+          SIZE="${{ steps.ver.outputs.size }}"
+          DATE=$(date -u +%Y-%m-%d)
+          python3 - "$VERSION" "$BUILD" "$SIZE" "$DATE" <<'PY'
+          import json, sys
+          version, build, size, date = sys.argv[1:5]
+          p = "apps.json"
+          data = json.load(open(p))
+          v = data["apps"][0]["versions"][0]
+          v["version"] = version
+          v["buildVersion"] = build
+          v["size"] = int(size)
+          v["date"] = date
+          json.dump(data, open(p, "w"), indent=2, ensure_ascii=False)
+          open(p, "a").write("\n")
+          print("apps.json updated:", version, build, size, date)
+          PY
+
+      - name: Commit apps.json if changed
+        run: |
+          set -eo pipefail
+          if git diff --quiet -- apps.json; then
+            echo "apps.json unchanged"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps.json
+          git commit -m "ci: sync apps.json to ${{ steps.ver.outputs.version }} (build ${{ steps.ver.outputs.build }}) [skip ci]"
+          git push origin HEAD:main

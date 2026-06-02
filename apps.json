@@ -22,10 +22,10 @@
       ],
       "versions": [
         {
-          "version": "1.2.0",
+          "version": "1.3.0",
           "buildVersion": "1",
           "date": "2026-06-02",
-          "localizedDescription": "Latest build from the main branch (reconnect fix, haptics, Siri guide).",
+          "localizedDescription": "Latest build from the main branch: switched chatCompletions to the 'openclaw' model id, removed debug logging from topic name generation, reconnect/haptics fixes.",
           "downloadURL": "https://github.com/lucasudar/ClawVoice/releases/download/nightly/ClawVoice.ipa",
           "size": 0,
           "minOSVersion": "17.0"
