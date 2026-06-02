@@ -28,6 +28,7 @@ final class GeminiLiveService: NSObject {
     private var pingTimer: Timer?  // keepalive — prevents Gemini from closing idle connection
     private var disconnectFired = false   // dedup: prevent multiple disconnect callbacks per session
     private var isConnecting = false      // guard: prevent parallel connect() calls
+    private var setupTimeoutTask: Task<Void, Never>?  // fails connect if setupComplete never arrives
 
     // MARK: - Connect / Disconnect
 
@@ -57,6 +58,7 @@ final class GeminiLiveService: NSObject {
         print("🔌 [Gemini] Connecting, model=\(AppSettings.shared.geminiModel), keyLen=\(apiKey.count)")
 
         guard !apiKey.isEmpty else {
+            isConnecting = false   // release guard so a retry after fixing the key can connect
             delegate?.geminiDidDisconnect(error: makeError("Gemini API key is not configured. Open Settings ⚙️"))
             return
         }
@@ -66,7 +68,11 @@ final class GeminiLiveService: NSObject {
         let model = AppSettings.shared.geminiModel
         let apiVersion = model.contains("native-audio") || model.contains("2.5") ? "v1beta" : "v1alpha"
         let baseURL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.\(apiVersion).GenerativeService.BidiGenerateContent"
-        guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else { return }
+        guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
+            isConnecting = false   // release guard so the next attempt isn't silently ignored
+            delegate?.geminiDidDisconnect(error: makeError("Failed to build Gemini connection URL"))
+            return
+        }
 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
@@ -98,6 +104,28 @@ final class GeminiLiveService: NSObject {
 
         webSocketTask = urlSession?.webSocketTask(with: url)
         webSocketTask?.resume()
+        startSetupTimeout()
+    }
+
+    /// Guards against hanging on "Connecting…" forever when the socket opens but
+    /// setupComplete never arrives (invalid key, model rejected, network stall).
+    private func startSetupTimeout() {
+        setupTimeoutTask?.cancel()
+        setupTimeoutTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 12_000_000_000)  // 12s
+            guard let self, !Task.isCancelled else { return }
+            await MainActor.run {
+                guard !self.isReady else { return }  // setup completed in time — nothing to do
+                print("⏱ [Gemini] Setup timed out — no setupComplete in 12s")
+                self.webSocketTask?.cancel(with: .goingAway, reason: nil)
+                self.fireDisconnect(error: self.makeError("Gemini didn’t respond — check your API key and model in Settings ⚙️"))
+            }
+        }
+    }
+
+    private func stopSetupTimeout() {
+        setupTimeoutTask?.cancel()
+        setupTimeoutTask = nil
     }
 
     /// Reset speaking state — call on resume so stale isModelSpeaking doesn't block audio.
@@ -114,12 +142,15 @@ final class GeminiLiveService: NSObject {
         }
         disconnectFired = true
         isConnecting = false   // allow reconnect after disconnect
+        stopSetupTimeout()
         delegate?.geminiDidDisconnect(error: error)
     }
 
     func disconnect() {
         isReady = false
+        isConnecting = false   // release guard so a manual restart can connect again
         stopPingTimer()
+        stopSetupTimeout()
         receiveTask?.cancel()
         receiveTask = nil
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
@@ -275,6 +306,7 @@ final class GeminiLiveService: NSObject {
         if json["setupComplete"] != nil {
             print("✅ [Gemini] Setup complete — ready!")
             await MainActor.run {
+                self.stopSetupTimeout()
                 self.isReady = true
                 self.isConnecting = false  // allow new connect() after this one completes
                 self.startPingTimer()
