@@ -1,0 +1,44 @@
+{
+  "name": "ClawVoice",
+  "subtitle": "Your OpenClaw server. Your voice.",
+  "description": "ClawVoice — a native iOS voice client for your own OpenClaw server, powered by the Gemini Live API for real-time bidirectional audio.",
+  "iconURL": "https://raw.githubusercontent.com/lucasudar/ClawVoice/main/assets/icon.png",
+  "website": "https://github.com/lucasudar/ClawVoice",
+  "tintColor": "#7C4DFF",
+  "apps": [
+    {
+      "name": "ClawVoice",
+      "bundleIdentifier": "com.lucasudar.ClawVoice",
+      "developerName": "lucasudar",
+      "subtitle": "Talk to your OpenClaw server, no screen required.",
+      "localizedDescription": "ClawVoice is a native iOS voice client for your own OpenClaw server.\n\nUnlike basic TTS assistants, ClawVoice uses the Gemini Live API — a real-time bidirectional audio stream. You talk naturally, it listens, understands, and replies with native voice synthesis. You can interrupt mid-sentence. It hears you even with the screen off.\n\nAll the heavy lifting — memory, tools, web search, messaging — runs on your own OpenClaw server with whichever AI model you've configured.",
+      "iconURL": "https://raw.githubusercontent.com/lucasudar/ClawVoice/main/assets/icon.png",
+      "tintColor": "#7C4DFF",
+      "category": "productivity",
+      "screenshots": [
+        "https://raw.githubusercontent.com/lucasudar/ClawVoice/main/assets/screenshot-speaking.jpg",
+        "https://raw.githubusercontent.com/lucasudar/ClawVoice/main/assets/screenshot-main.png",
+        "https://raw.githubusercontent.com/lucasudar/ClawVoice/main/assets/screenshot-settings-v2.png"
+      ],
+      "versions": [
+        {
+          "version": "1.2.0",
+          "buildVersion": "1",
+          "date": "2026-06-02",
+          "localizedDescription": "Latest build from the main branch (reconnect fix, haptics, Siri guide).",
+          "downloadURL": "https://github.com/lucasudar/ClawVoice/releases/download/nightly/ClawVoice.ipa",
+          "size": 0,
+          "minOSVersion": "17.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSMicrophoneUsageDescription": "ClawVoice needs the microphone to stream your voice to your OpenClaw server.",
+          "NSLocalNetworkUsageDescription": "ClawVoice needs local network access to reach your self-hosted OpenClaw server."
+        }
+      }
+    }
+  ],
+  "news": []
+}
